@@ -1,0 +1,2 @@
+# EduRights
+Mern stack project
