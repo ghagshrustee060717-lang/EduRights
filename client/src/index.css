@@ -16,6 +16,12 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  --color-indigo: #5B5FDE;
+  --color-yellow: #FFC700;
+  --color-green: #2ECC71;
+  --color-coral: #FF6B6B;
+  --color-cream: #F8F9FD;
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -53,6 +59,7 @@
 
 body {
   margin: 0;
+  background-color: var(--color-cream);
 }
 
 #root {
