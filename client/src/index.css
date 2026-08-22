@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -12,8 +14,8 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Nunito', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Baloo 2', system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   --color-indigo: #5B5FDE;
@@ -22,7 +24,9 @@
   --color-coral: #FF6B6B;
   --color-cream: #F8F9FD;
 
-  font: 18px/145% var(--sans);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.45;
   letter-spacing: 0.18px;
   color-scheme: light dark;
   color: var(--text);

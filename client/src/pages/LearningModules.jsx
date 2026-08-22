@@ -23,28 +23,93 @@ function LearningModules() {
       style={{
         minHeight: "100vh",
         background: "#F8F9FD",
-        padding: "2rem 1rem 4rem",
-        fontFamily: "Arial, sans-serif",
+        padding: "2.5rem 1rem 4rem",
+        fontFamily: "var(--sans)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Decorative background blobs */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-80px",
+          left: "-100px",
+          width: "320px",
+          height: "320px",
+          borderRadius: "50%",
+          background: "#5B5FDE",
+          opacity: 0.08,
+          filter: "blur(10px)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: "60px",
+          right: "-120px",
+          width: "300px",
+          height: "300px",
+          borderRadius: "50%",
+          background: "#FFC700",
+          opacity: 0.12,
+          filter: "blur(10px)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: "10%",
+          left: "-80px",
+          width: "260px",
+          height: "260px",
+          borderRadius: "50%",
+          background: "#2ECC71",
+          opacity: 0.08,
+          filter: "blur(10px)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-60px",
+          right: "5%",
+          width: "220px",
+          height: "220px",
+          borderRadius: "50%",
+          background: "#FF6B6B",
+          opacity: 0.08,
+          filter: "blur(10px)",
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Header */}
       <div
         style={{
           maxWidth: "900px",
           margin: "0 auto",
           textAlign: "center",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div
           style={{
-            display: "inline-block",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.4rem",
             background: "#FFF4CC",
-            color: "#5B5FDE",
-            padding: "0.45rem 1rem",
+            color: "#8A6D00",
+            padding: "0.45rem 1.1rem",
             borderRadius: "999px",
             fontSize: "0.85rem",
-            fontWeight: 700,
-            marginBottom: "0.8rem",
+            fontWeight: 800,
+            marginBottom: "1.1rem",
+            fontFamily: "var(--sans)",
           }}
         >
           🌟 YOUR LEARNING ADVENTURE
@@ -53,21 +118,48 @@ function LearningModules() {
         <h1
           style={{
             margin: "0",
-            color: "#5B5FDE",
-            fontSize: "clamp(2rem, 5vw, 3rem)",
+            fontFamily: "var(--heading)",
+            fontSize: "clamp(2.2rem, 6vw, 3.4rem)",
             fontWeight: 800,
+            lineHeight: "1.2",
+            padding: "0.15em 0",
+            letterSpacing: "-0.02em",
+            background:
+              "linear-gradient(90deg, #5B5FDE 0%, #7B5FDE 50%, #FF6B6B 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            display: "inline-block",
           }}
         >
           Explore Your Rights!
         </h1>
 
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            margin: "0.3rem 0 1rem",
+          }}
+        >
+          <svg width="140" height="14" viewBox="0 0 140 14" fill="none">
+            <path
+              d="M2 10C20 2 35 2 50 8C65 14 80 2 95 6C110 10 122 4 138 8"
+              stroke="#FFC700"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+
         <p
           style={{
-            margin: "0.7rem auto 1.8rem",
+            margin: "0 auto 1.8rem",
             maxWidth: "600px",
             color: "#6B6375",
             fontSize: "1rem",
             lineHeight: 1.6,
+            fontFamily: "var(--sans)",
           }}
         >
           Complete each adventure to unlock the next one and become a
@@ -79,47 +171,72 @@ function LearningModules() {
           style={{
             background: "#FFFFFF",
             borderRadius: "24px",
-            padding: "1.3rem 1.5rem",
+            padding: "1.4rem 1.6rem",
             marginBottom: "3rem",
-            boxShadow: "0 8px 24px rgba(91, 95, 222, 0.10)",
+            boxShadow: "0 10px 28px rgba(91, 95, 222, 0.12)",
             border: "2px solid #EEF0FF",
+            display: "flex",
+            alignItems: "center",
+            gap: "1.1rem",
+            textAlign: "left",
           }}
         >
           <div
             style={{
+              width: "52px",
+              height: "52px",
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #FFC700, #FFD84D)",
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "0.5rem",
+              justifyContent: "center",
+              fontSize: "1.5rem",
+              flexShrink: 0,
+              boxShadow: "0 6px 14px rgba(255, 199, 0, 0.35)",
             }}
           >
-            <span
-              style={{
-                color: "#08060D",
-                fontWeight: 700,
-              }}
-            >
-              🏆 Your Progress
-            </span>
-
-            <span
-              style={{
-                background: "#E9F9EF",
-                color: "#1E8449",
-                padding: "0.3rem 0.7rem",
-                borderRadius: "999px",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-              }}
-            >
-              {percent}%
-            </span>
+            🏆
           </div>
 
-          <ProgressBar
-            percent={percent}
-            label={`${completed.length} of ${modules.length} modules completed`}
-          />
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "0.5rem",
+              }}
+            >
+              <span
+                style={{
+                  color: "#08060D",
+                  fontWeight: 800,
+                  fontFamily: "var(--heading)",
+                  fontSize: "1.05rem",
+                }}
+              >
+                Your Progress
+              </span>
+
+              <span
+                style={{
+                  background: "#E9F9EF",
+                  color: "#1E8449",
+                  padding: "0.3rem 0.75rem",
+                  borderRadius: "999px",
+                  fontSize: "0.8rem",
+                  fontWeight: 800,
+                }}
+              >
+                {percent}%
+              </span>
+            </div>
+
+            <ProgressBar
+              percent={percent}
+              label={`${completed.length} of ${modules.length} modules completed`}
+            />
+          </div>
         </div>
       </div>
 
@@ -129,6 +246,7 @@ function LearningModules() {
           position: "relative",
           maxWidth: "850px",
           margin: "0 auto",
+          zIndex: 1,
         }}
       >
         {/* Connecting line */}
@@ -196,6 +314,9 @@ function LearningModules() {
           marginTop: "3rem",
           color: "#6B6375",
           fontSize: "0.9rem",
+          fontFamily: "var(--sans)",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         ⭐ Keep learning — every module makes you stronger!

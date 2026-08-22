@@ -1,29 +1,50 @@
 function ProgressBar({ percent = 0, label }) {
   return (
-    <div style={{ width: "100%", maxWidth: "500px", margin: "0 auto 2rem" }}>
+    <div style={{ width: "100%", maxWidth: "500px", margin: "0 auto" }}>
       {label && (
-        <p style={{ marginBottom: "6px", fontSize: "0.9rem", color: "#6b6375", fontWeight: 600 }}>
+        <p
+          style={{
+            marginBottom: "6px",
+            fontSize: "0.9rem",
+            color: "#6b6375",
+            fontWeight: 700,
+            fontFamily: "var(--sans)",
+          }}
+        >
           {label}
         </p>
       )}
       <div
         style={{
-          background: "#e5e4e7",
+          background: "#E5E4E7",
           borderRadius: "999px",
-          height: "14px",
+          height: "16px",
           width: "100%",
           overflow: "hidden",
+          position: "relative",
         }}
       >
         <div
           style={{
             width: `${percent}%`,
-            background: "#2ECC71",
+            background: "linear-gradient(90deg, #5B5FDE, #2ECC71)",
             height: "100%",
             borderRadius: "999px",
-            transition: "width 0.4s ease",
+            transition: "width 0.5s ease",
+            position: "relative",
+            overflow: "hidden",
           }}
-        />
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(90deg, rgba(255,255,255,0.35), transparent)",
+              width: "40%",
+            }}
+          />
+        </div>
       </div>
     </div>
   );

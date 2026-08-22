@@ -7,14 +7,14 @@ import "./App.css";
 
 function App() {
   return (
-    <div style={{ padding: "1rem 2rem" }}>
+    <>
       <Navbar />
       <Routes>
         <Route path="/" element={<LearningModules />} />
         <Route path="/module/:id" element={<ModuleDetails />} />
         <Route path="/knowledge-hub" element={<KnowledgeHub />} />
       </Routes>
-    </div>
+    </>
   );
 }
 

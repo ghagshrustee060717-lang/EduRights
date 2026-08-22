@@ -84,6 +84,7 @@ function ModuleCard({
           fontWeight: 800,
           fontSize: "1rem",
           marginBottom: "1rem",
+          fontFamily: "var(--heading)",
         }}
       >
         {index + 1}
@@ -137,8 +138,9 @@ function ModuleCard({
         style={{
           margin: "0 0 0.4rem",
           color: locked ? "#77747D" : "#08060D",
-          fontSize: "1.2rem",
+          fontSize: "1.25rem",
           fontWeight: 800,
+          fontFamily: "var(--heading)",
         }}
       >
         {module.title}
