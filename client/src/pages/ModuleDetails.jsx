@@ -38,6 +38,7 @@ function ModuleDetails() {
           alignItems: "center",
           justifyContent: "center",
           padding: "2rem",
+          fontFamily: "var(--sans)",
         }}
       >
         <div
@@ -57,6 +58,7 @@ function ModuleDetails() {
             style={{
               color: "#5B5FDE",
               marginBottom: "0.5rem",
+              fontFamily: "var(--heading)",
             }}
           >
             Module Not Found
@@ -77,6 +79,7 @@ function ModuleDetails() {
               color: "#FFFFFF",
               fontWeight: 700,
               cursor: "pointer",
+              fontFamily: "var(--sans)",
             }}
           >
             ← Back to Modules
@@ -111,7 +114,7 @@ function ModuleDetails() {
         minHeight: "100vh",
         background: "#F8F9FD",
         padding: "1.5rem 1rem 4rem",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "var(--sans)",
       }}
     >
       <div
@@ -132,6 +135,7 @@ function ModuleDetails() {
             cursor: "pointer",
             padding: "0.5rem 0",
             marginBottom: "1rem",
+            fontFamily: "var(--sans)",
           }}
         >
           ← Back to Adventure Map
@@ -196,6 +200,7 @@ function ModuleDetails() {
               marginBottom: "1rem",
               position: "relative",
               zIndex: 1,
+              fontFamily: "var(--heading)",
             }}
           >
             {moduleIndex + 1}
@@ -217,8 +222,11 @@ function ModuleDetails() {
               margin: "0 0 0.5rem",
               fontSize: "clamp(1.8rem, 5vw, 2.5rem)",
               fontWeight: 800,
+              lineHeight: "1.2",
+              padding: "0.1em 0",
               position: "relative",
               zIndex: 1,
+              fontFamily: "var(--heading)",
             }}
           >
             {module.title}
@@ -276,6 +284,7 @@ function ModuleDetails() {
                 color: "#08060D",
                 fontSize: "1.3rem",
                 fontWeight: 800,
+                fontFamily: "var(--heading)",
               }}
             >
               Let's Learn!
@@ -325,6 +334,7 @@ function ModuleDetails() {
                       justifyContent: "center",
                       fontSize: "0.8rem",
                       fontWeight: 800,
+                      fontFamily: "var(--heading)",
                     }}
                   >
                     {i + 1}
@@ -377,6 +387,7 @@ function ModuleDetails() {
                     color: "#1E8449",
                     fontWeight: 800,
                     fontSize: "1.1rem",
+                    fontFamily: "var(--heading)",
                   }}
                 >
                   Adventure Completed!
@@ -404,6 +415,7 @@ function ModuleDetails() {
                     color: "#FFFFFF",
                     fontWeight: 700,
                     cursor: "pointer",
+                    fontFamily: "var(--sans)",
                   }}
                 >
                   Continue Adventure →
@@ -434,6 +446,7 @@ function ModuleDetails() {
                     fontWeight: 800,
                     fontSize: "1rem",
                     cursor: "pointer",
+                    fontFamily: "var(--sans)",
                     boxShadow:
                       "0 8px 18px rgba(255,199,0,0.3)",
                     transition:

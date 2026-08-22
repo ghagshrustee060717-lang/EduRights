@@ -34,7 +34,7 @@ function KnowledgeHub() {
         minHeight: "100vh",
         background: "#F8F9FD",
         padding: "1.5rem 1rem 4rem",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "var(--sans)",
       }}
     >
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
@@ -83,8 +83,11 @@ function KnowledgeHub() {
               margin: "0 0 0.5rem",
               fontSize: "clamp(1.8rem, 5vw, 2.5rem)",
               fontWeight: 800,
+              lineHeight: "1.2",
+              padding: "0.1em 0",
               position: "relative",
               zIndex: 1,
+              fontFamily: "var(--heading)",
             }}
           >
             Knowledge Hub
@@ -131,7 +134,7 @@ function KnowledgeHub() {
               fontSize: "0.95rem",
               color: "#08060D",
               background: "transparent",
-              fontFamily: "Arial, sans-serif",
+              fontFamily: "var(--sans)",
             }}
           />
           {search && (
@@ -177,7 +180,7 @@ function KnowledgeHub() {
             >
               ❓
             </span>
-            <h2 style={{ margin: 0, color: "#08060D", fontSize: "1.3rem", fontWeight: 800 }}>
+            <h2 style={{ margin: 0, color: "#08060D", fontSize: "1.3rem", fontWeight: 800, fontFamily: "var(--heading)" }}>
               FAQs
             </h2>
           </div>
@@ -215,6 +218,7 @@ function KnowledgeHub() {
                       border: "none",
                       cursor: "pointer",
                       textAlign: "left",
+                      fontFamily: "var(--sans)",
                     }}
                   >
                     <span
@@ -296,7 +300,7 @@ function KnowledgeHub() {
             >
               📖
             </span>
-            <h2 style={{ margin: 0, color: "#08060D", fontSize: "1.3rem", fontWeight: 800 }}>
+            <h2 style={{ margin: 0, color: "#08060D", fontSize: "1.3rem", fontWeight: 800, fontFamily: "var(--heading)" }}>
               Case Stories
             </h2>
           </div>
@@ -325,6 +329,7 @@ function KnowledgeHub() {
                     color: "#08060D",
                     fontSize: "1.05rem",
                     fontWeight: 800,
+                    fontFamily: "var(--heading)",
                   }}
                 >
                   {story.title}
