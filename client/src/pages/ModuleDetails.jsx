@@ -5,7 +5,16 @@ import {
   getCompletedModules,
   markModuleComplete,
   isModuleUnlocked,
+  getModuleFeedback,
+  saveModuleFeedback,
 } from "../utils/progress";
+
+const FEEDBACK_OPTIONS = [
+  { emoji: "😡", label: "Didn't like it" },
+  { emoji: "😐", label: "It was okay" },
+  { emoji: "😊", label: "I liked it" },
+  { emoji: "🤩", label: "I loved it!" },
+];
 
 function ModuleDetails() {
   const { id } = useParams();
@@ -13,6 +22,7 @@ function ModuleDetails() {
 
   const module = modules.find((m) => m.id === id);
   const [completed, setCompleted] = useState(getCompletedModules());
+  const [feedback, setFeedback] = useState(getModuleFeedback());
 
   const moduleIndex = modules.findIndex((m) => m.id === id);
 
@@ -21,6 +31,7 @@ function ModuleDetails() {
     : false;
 
   const isCompleted = completed.includes(id);
+  const selectedFeedback = feedback[id];
 
   useEffect(() => {
     if (module && !unlocked) {
@@ -106,6 +117,11 @@ function ModuleDetails() {
   const handleComplete = () => {
     const updated = markModuleComplete(module.id);
     setCompleted(updated);
+  };
+
+  const handleFeedback = (emoji) => {
+    const updated = saveModuleFeedback(module.id, emoji);
+    setFeedback({ ...updated });
   };
 
   return (
@@ -468,6 +484,95 @@ function ModuleDetails() {
                   ⭐ Mark Adventure as Complete
                 </button>
               </>
+            )}
+          </div>
+
+          {/* Feedback Section */}
+          <div
+            style={{
+              marginTop: "1.5rem",
+              paddingTop: "1.5rem",
+              borderTop: "2px solid #F0F0F5",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                color: "#08060D",
+                fontWeight: 800,
+                fontSize: "1rem",
+                marginBottom: "1rem",
+                fontFamily: "var(--heading)",
+              }}
+            >
+              How did this adventure make you feel?
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "0.8rem",
+                flexWrap: "wrap",
+              }}
+            >
+              {FEEDBACK_OPTIONS.map((option) => {
+                const isSelected = selectedFeedback === option.emoji;
+                return (
+                  <button
+                    key={option.emoji}
+                    onClick={() => handleFeedback(option.emoji)}
+                    title={option.label}
+                    aria-label={option.label}
+                    style={{
+                      width: "64px",
+                      height: "64px",
+                      borderRadius: "20px",
+                      border: isSelected
+                        ? "3px solid #5B5FDE"
+                        : "2px solid #EEF0FF",
+                      background: isSelected ? "#EEF0FF" : "#FFFFFF",
+                      fontSize: "1.8rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transform: isSelected
+                        ? "scale(1.1)"
+                        : "scale(1)",
+                      boxShadow: isSelected
+                        ? "0 8px 18px rgba(91, 95, 222, 0.25)"
+                        : "0 4px 10px rgba(0,0,0,0.04)",
+                      transition:
+                        "transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = "scale(1.06)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }
+                    }}
+                  >
+                    {option.emoji}
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedFeedback && (
+              <p
+                style={{
+                  marginTop: "0.9rem",
+                  color: "#6B6375",
+                  fontSize: "0.85rem",
+                }}
+              >
+                Thanks for sharing how you feel! 💜
+              </p>
             )}
           </div>
         </div>
