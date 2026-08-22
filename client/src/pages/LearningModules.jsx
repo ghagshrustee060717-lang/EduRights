@@ -3,20 +3,34 @@ import { useNavigate } from "react-router-dom";
 import { modules } from "../data/modules";
 import ModuleCard from "../components/ModuleCard";
 import ProgressBar from "../components/ProgressBar";
-import { getCompletedModules, isModuleUnlocked } from "../utils/progress";
+import {
+  getCompletedModules,
+  isModuleUnlocked,
+  getModuleFeedback,
+  getXP,
+  getLevelInfo,
+  getBadges,
+} from "../utils/progress";
 
 function LearningModules() {
   const navigate = useNavigate();
   const [completed, setCompleted] = useState([]);
+  const [feedback, setFeedback] = useState({});
 
   useEffect(() => {
     setCompleted(getCompletedModules());
+    setFeedback(getModuleFeedback());
   }, []);
 
   const percent =
     modules.length > 0
       ? Math.round((completed.length / modules.length) * 100)
       : 0;
+
+  const xp = getXP(completed);
+  const levelInfo = getLevelInfo(xp);
+  const badges = getBadges(completed, feedback, modules);
+  const unlockedBadges = badges.filter((b) => b.unlocked);
 
   return (
     <div
@@ -175,67 +189,146 @@ function LearningModules() {
             marginBottom: "3rem",
             boxShadow: "0 10px 28px rgba(91, 95, 222, 0.12)",
             border: "2px solid #EEF0FF",
-            display: "flex",
-            alignItems: "center",
-            gap: "1.1rem",
             textAlign: "left",
           }}
         >
           <div
             style={{
-              width: "52px",
-              height: "52px",
-              borderRadius: "16px",
-              background: "linear-gradient(135deg, #FFC700, #FFD84D)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.5rem",
-              flexShrink: 0,
-              boxShadow: "0 6px 14px rgba(255, 199, 0, 0.35)",
+              gap: "1.1rem",
+              marginBottom: "1.2rem",
             }}
           >
-            🏆
-          </div>
-
-          <div style={{ flex: 1 }}>
             <div
               style={{
+                width: "52px",
+                height: "52px",
+                borderRadius: "16px",
+                background: "linear-gradient(135deg, #FFC700, #FFD84D)",
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "0.5rem",
+                justifyContent: "center",
+                fontSize: "1.5rem",
+                flexShrink: 0,
+                boxShadow: "0 6px 14px rgba(255, 199, 0, 0.35)",
               }}
             >
-              <span
+              🏆
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <div
                 style={{
-                  color: "#08060D",
-                  fontWeight: 800,
-                  fontFamily: "var(--heading)",
-                  fontSize: "1.05rem",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                  flexWrap: "wrap",
+                  gap: "0.4rem",
                 }}
               >
-                Your Progress
-              </span>
+                <span
+                  style={{
+                    color: "#08060D",
+                    fontWeight: 800,
+                    fontFamily: "var(--heading)",
+                    fontSize: "1.05rem",
+                  }}
+                >
+                  Your Progress
+                </span>
 
+                <span
+                  style={{
+                    background: "#E9F9EF",
+                    color: "#1E8449",
+                    padding: "0.3rem 0.75rem",
+                    borderRadius: "999px",
+                    fontSize: "0.8rem",
+                    fontWeight: 800,
+                  }}
+                >
+                  {percent}%
+                </span>
+              </div>
+
+              <ProgressBar
+                percent={percent}
+                label={`${completed.length} of ${modules.length} modules completed`}
+              />
+            </div>
+          </div>
+
+          {/* XP / Level / Badges strip */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "0.8rem",
+              paddingTop: "1rem",
+              borderTop: "2px solid #F0F0F5",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.7rem" }}>
               <span
                 style={{
-                  background: "#E9F9EF",
-                  color: "#1E8449",
-                  padding: "0.3rem 0.75rem",
+                  background: "#EEF0FF",
+                  color: "#5B5FDE",
+                  padding: "0.35rem 0.8rem",
                   borderRadius: "999px",
                   fontSize: "0.8rem",
                   fontWeight: 800,
                 }}
               >
-                {percent}%
+                Lvl {levelInfo.level} · {levelInfo.title}
+              </span>
+              <span
+                style={{
+                  color: "#6B6375",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                }}
+              >
+                ⚡ {xp} XP
               </span>
             </div>
 
-            <ProgressBar
-              percent={percent}
-              label={`${completed.length} of ${modules.length} modules completed`}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <div style={{ display: "flex", gap: "0.3rem" }}>
+                {badges.map((badge) => (
+                  <span
+                    key={badge.id}
+                    title={badge.label}
+                    style={{
+                      fontSize: "1.1rem",
+                      opacity: badge.unlocked ? 1 : 0.3,
+                      filter: badge.unlocked ? "none" : "grayscale(100%)",
+                    }}
+                  >
+                    {badge.icon}
+                  </span>
+                ))}
+              </div>
+
+              <button
+                onClick={() => navigate("/progress")}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#5B5FDE",
+                  fontWeight: 700,
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                  fontFamily: "var(--sans)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                View all →
+              </button>
+            </div>
           </div>
         </div>
       </div>

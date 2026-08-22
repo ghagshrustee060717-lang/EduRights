@@ -6,6 +6,7 @@ function Navbar() {
   const links = [
     { to: "/", label: "Learning Modules", icon: "🗺️" },
     { to: "/knowledge-hub", label: "Knowledge Hub", icon: "📚" },
+    { to: "/progress", label: "My Progress", icon: "🏆" },
   ];
 
   return (
@@ -79,6 +80,7 @@ function Navbar() {
             padding: "0.35rem",
             borderRadius: "999px",
             border: "1px solid #EEF0FF",
+            flexWrap: "wrap",
           }}
         >
           {links.map((link) => {
