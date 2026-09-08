@@ -1,0 +1,113 @@
+:root {
+  --font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
+  --bg-landing: #14103e;
+  --bg-landing-dark: #0d0a2d;
+  --bg-app: #f8fafc;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #e0e7ff;
+  --primary-glow: rgba(79, 70, 229, 0.25);
+
+  --accent-gold: #fbbf24;
+  --accent-gold-hover: #f59e0b;
+  --accent-gold-light: #fef3c7;
+
+  --accent-green: #10b981;
+  --accent-green-light: #d1fae5;
+
+  --accent-coral: #f43f5e;
+  --accent-coral-light: #ffe4e6;
+
+  --accent-blue: #0ea5e9;
+  --accent-blue-light: #e0f2fe;
+
+  --accent-purple: #8b5cf6;
+  --accent-purple-light: #ede9fe;
+
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 9999px;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 6px 20px -3px rgba(79, 70, 229, 0.08);
+  --shadow-lg: 0 12px 32px -4px rgba(79, 70, 229, 0.12);
+  --shadow-glow: 0 0 25px rgba(251, 191, 36, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--text-main);
+  background-color: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+input, select {
+  font-family: inherit;
+  outline: none;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.6); }
+  100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+}
+
+.float-animation {
+  animation: float 4s ease-in-out infinite;
+}
+
+.glow-animation {
+  animation: pulse-glow 2.5s infinite;
+}
