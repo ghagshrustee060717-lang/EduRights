@@ -1,49 +1,26 @@
 function ProgressBar({ percent = 0, label }) {
+  const safePercent = Math.min(
+    100,
+    Math.max(0, percent)
+  );
+
   return (
-    <div style={{ width: "100%", maxWidth: "500px", margin: "0 auto" }}>
+    <div className="progress-wrapper">
       {label && (
-        <p
-          style={{
-            marginBottom: "6px",
-            fontSize: "0.9rem",
-            color: "#6b6375",
-            fontWeight: 700,
-            fontFamily: "var(--sans)",
-          }}
-        >
-          {label}
-        </p>
+        <div className="progress-label">
+          <span>{label}</span>
+          <strong>{safePercent}%</strong>
+        </div>
       )}
-      <div
-        style={{
-          background: "#E5E4E7",
-          borderRadius: "999px",
-          height: "16px",
-          width: "100%",
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
+
+      <div className="progress-track">
         <div
+          className="progress-fill"
           style={{
-            width: `${percent}%`,
-            background: "linear-gradient(90deg, #5B5FDE, #2ECC71)",
-            height: "100%",
-            borderRadius: "999px",
-            transition: "width 0.5s ease",
-            position: "relative",
-            overflow: "hidden",
+            width: `${safePercent}%`,
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(90deg, rgba(255,255,255,0.35), transparent)",
-              width: "40%",
-            }}
-          />
+          <div className="progress-shine" />
         </div>
       </div>
     </div>
