@@ -2,6 +2,13 @@ import mongoose from "mongoose";
 
 const moduleSchema = new mongoose.Schema(
   {
+    moduleId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true
+    },
+
     title: {
       type: String,
       required: true,

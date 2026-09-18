@@ -19,10 +19,12 @@ export const getModules = async (req, res) => {
   }
 };
 
-// Get a single module by ID
+// Get a single module using the frontend module ID
 export const getModuleById = async (req, res) => {
   try {
-    const module = await Module.findById(req.params.id);
+    const module = await Module.findOne({
+      moduleId: req.params.id
+    }).select("-languageVariants");
 
     if (!module) {
       return res.status(404).json({
@@ -42,26 +44,39 @@ export const getModuleById = async (req, res) => {
   }
 };
 
-// Create a new module
+// Create a new learning module
 export const createModule = async (req, res) => {
   try {
-    const { title, topic, content, order, languageVariants } = req.body;
+    const {
+      moduleId,
+      title,
+      topic,
+      content,
+      order,
+      languageVariants
+    } = req.body;
 
-    if (!title || !topic || order === undefined) {
+    if (!moduleId || !title || !topic || order === undefined) {
       return res.status(400).json({
-        message: "Title, topic and order are required"
+        message: "Module ID, title, topic and order are required"
       });
     }
 
-    const existingModule = await Module.findOne({ order });
+    const existingModule = await Module.findOne({
+      $or: [
+        { moduleId },
+        { order }
+      ]
+    });
 
     if (existingModule) {
       return res.status(409).json({
-        message: "A module with this order already exists"
+        message: "A module with this ID or order already exists"
       });
     }
 
     const module = await Module.create({
+      moduleId,
       title,
       topic,
       content: Array.isArray(content) ? content : [],
@@ -80,4 +95,58 @@ export const createModule = async (req, res) => {
       message: "Server error while creating module"
     });
   }
+};
+
+// Update an existing module
+export const updateModule = async (req, res) => {
+  try {
+    const module = await Module.findById(req.params.id);
+
+    if (!module) {
+      return res.status(404).json({
+        message: "Module not found"
+      });
+    }
+
+    const { moduleId } = req.body;
+
+    if (!moduleId) {
+      return res.status(400).json({
+        message: "Module ID is required"
+      });
+    }
+
+    const existingModule = await Module.findOne({
+      moduleId,
+      _id: { $ne: module._id }
+    });
+
+    if (existingModule) {
+      return res.status(409).json({
+        message: "This module ID is already in use"
+      });
+    }
+
+    module.moduleId = moduleId;
+
+    await module.save();
+
+    return res.status(200).json({
+      message: "Module updated successfully",
+      module
+    });
+  } catch (error) {
+    console.error("Update module error:", error);
+
+    return res.status(500).json({
+      message: "Server error while updating module"
+    });
+  }
+};
+
+export default {
+  getModules,
+  getModuleById,
+  createModule,
+  updateModule
 };
