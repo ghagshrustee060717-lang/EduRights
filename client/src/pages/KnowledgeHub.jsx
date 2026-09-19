@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search,
   BookOpen,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { faqs, caseStories } from "../data/knowledgeHub";
+import { getArticles } from "../services/api";
 
 const colors = [
   "#4f46e5",
@@ -22,6 +23,62 @@ function KnowledgeHub() {
   const [openStory, setOpenStory] = useState(null);
   const [search, setSearch] = useState("");
 
+  // Local data is used as the initial/fallback data.
+  const [hubFaqs, setHubFaqs] = useState(faqs);
+  const [hubStories, setHubStories] = useState(caseStories);
+
+  // Load Knowledge Hub content from the backend.
+  useEffect(() => {
+    const loadArticles = async () => {
+      try {
+        const data = await getArticles();
+
+        const articles = data.articles || [];
+
+        // Convert backend FAQ articles into the format
+        // already used by this page.
+        const backendFaqs = articles
+          .filter((article) => article.category === "FAQ")
+          .map((article) => ({
+            id: article.tags?.[0] || article._id,
+            q: article.title,
+            a: article.body,
+          }));
+
+        // Convert backend Case Story articles into the format
+        // already used by this page.
+        const backendStories = articles
+          .filter((article) => article.category === "Case Story")
+          .map((article) => ({
+            id:
+              article.tags?.find((tag) =>
+                /^s\d+$/.test(tag)
+              ) || article._id,
+            title: article.title,
+            tags:
+              article.tags?.filter(
+                (tag) => !/^s\d+$/.test(tag)
+              ) || [],
+            summary: article.body,
+          }));
+
+        // Only replace local data when backend data exists.
+        // This keeps the page working if the API is unavailable.
+        if (backendFaqs.length > 0) {
+          setHubFaqs(backendFaqs);
+        }
+
+        if (backendStories.length > 0) {
+          setHubStories(backendStories);
+        }
+      } catch (error) {
+        console.error("Knowledge Hub API error:", error);
+      }
+    };
+
+    loadArticles();
+  }, []);
+
   const query = search.trim().toLowerCase();
 
   /* ================================
@@ -29,23 +86,23 @@ function KnowledgeHub() {
   ================================= */
 
   const filteredFaqs = useMemo(() => {
-    if (!query) return faqs;
+    if (!query) return hubFaqs;
 
-    return faqs.filter(
+    return hubFaqs.filter(
       (faq) =>
         faq.q.toLowerCase().includes(query) ||
         faq.a.toLowerCase().includes(query)
     );
-  }, [query]);
+  }, [query, hubFaqs]);
 
   /* ================================
      FILTER CASE STORIES
   ================================= */
 
   const filteredStories = useMemo(() => {
-    if (!query) return caseStories;
+    if (!query) return hubStories;
 
-    return caseStories.filter(
+    return hubStories.filter(
       (story) =>
         story.title.toLowerCase().includes(query) ||
         story.summary.toLowerCase().includes(query) ||
@@ -53,7 +110,7 @@ function KnowledgeHub() {
           tag.toLowerCase().includes(query)
         )
     );
-  }, [query]);
+  }, [query, hubStories]);
 
   return (
     <main className="hub-page">
