@@ -12,6 +12,8 @@ import { modules as fallbackModules } from "../data/modules";
 import ModuleCard from "../components/ModuleCard";
 import ProgressBar from "../components/ProgressBar";
 
+import { getModules } from "../services/api";
+
 import {
   getCompletedModules,
   isModuleUnlocked,
@@ -33,13 +35,7 @@ function LearningModules() {
   useEffect(() => {
     const loadModules = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/modules");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch modules");
-        }
-
-        const data = await response.json();
+       const data = await getModules();
 
         const backendModules = (data.modules || []).map((module) => ({
           id: module.moduleId,
