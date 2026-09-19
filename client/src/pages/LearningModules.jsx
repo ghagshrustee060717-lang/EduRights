@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { modules } from "../data/modules";
+import { modules as fallbackModules } from "../data/modules";
 import ModuleCard from "../components/ModuleCard";
 import ProgressBar from "../components/ProgressBar";
 
@@ -24,10 +24,43 @@ import {
 function LearningModules() {
   const navigate = useNavigate();
 
+  const [modules, setModules] = useState(fallbackModules);
   const [completed, setCompleted] = useState([]);
   const [feedback, setFeedback] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
+    const loadModules = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/modules");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch modules");
+        }
+
+        const data = await response.json();
+
+        const backendModules = (data.modules || []).map((module) => ({
+          id: module.moduleId,
+          title: module.title,
+          topic: module.topic,
+          content: module.content || [],
+        }));
+
+        if (backendModules.length > 0) {
+          setModules(backendModules);
+        }
+      } catch (error) {
+        console.error("Module API error:", error);
+        setApiError("Using saved learning content.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadModules();
+
     setCompleted(getCompletedModules());
     setFeedback(getModuleFeedback());
   }, []);
@@ -177,6 +210,18 @@ function LearningModules() {
             </div>
           </div>
 
+          {loading && (
+            <p className="learning-api-message">
+              Loading learning modules...
+            </p>
+          )}
+
+          {!loading && apiError && (
+            <p className="learning-api-message">
+              {apiError}
+            </p>
+          )}
+
           {/* Adventure map */}
           <div className="adventure-map">
             <div className="adventure-line" />
@@ -228,9 +273,11 @@ function LearningModules() {
 
         <div className="learning-footer-message">
           <Sparkles size={17} />
+
           <span>
             Keep learning — every module makes you stronger!
           </span>
+
           <Sparkles size={17} />
         </div>
       </div>
