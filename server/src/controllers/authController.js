@@ -74,19 +74,12 @@ export const registerUser = async (req, res) => {
           avatar: avatar || 'superhero-aarav',
           role: role || 'child',
           currentLevel: 1,
-          levelTitle: 'Novice Explorer',
-          totalPoints: 100,
+          levelTitle: 'Level 1 Beginner',
+          totalPoints: 0,
           nextLevelPoints: 500,
           streakDays: 1,
-          badgesEarned: [
-            {
-              badgeId: 'b1',
-              name: 'First Steps',
-              icon: '🌟',
-              description: 'Joined the EduRights adventure!',
-              earnedAt: new Date(),
-            },
-          ],
+          badgesEarned: [],
+          completedModules: [],
         });
         newUser = created.toProfileJSON();
       } catch (err) {
@@ -198,6 +191,15 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user._id || user.id);
 
+    let effectiveTotalPoints = user.totalPoints ?? 0;
+    if (user.email !== 'aarav@edurights.org' && user.completedModules?.length > 0) {
+      effectiveTotalPoints = user.completedModules.reduce((s, m) => s + (Number(m.score) || 0), 0);
+      if (user.totalPoints !== effectiveTotalPoints) {
+        user.totalPoints = effectiveTotalPoints;
+        if (typeof user.save === 'function') user.save().catch(() => {});
+      }
+    }
+
     return res.json({
       success: true,
       message: `Welcome back, ${user.name}!`,
@@ -211,9 +213,9 @@ export const loginUser = async (req, res) => {
         avatar: user.avatar,
         role: user.role,
         currentLevel: user.currentLevel || 1,
-        levelTitle: user.levelTitle || 'Explorer',
-        totalPoints: user.totalPoints || 100,
-        nextLevelPoints: user.nextLevelPoints || 500,
+        levelTitle: user.levelTitle || 'Level 1 Beginner',
+        totalPoints: effectiveTotalPoints,
+        nextLevelPoints: user.nextLevelPoints ?? 500,
         streakDays: user.streakDays || 1,
         badgesEarned: user.badgesEarned || [],
         completedModules: user.completedModules || [],
@@ -235,6 +237,16 @@ export const loginUser = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const user = req.user;
+
+    let effectiveTotalPoints = user.totalPoints ?? 0;
+    if (user.email !== 'aarav@edurights.org' && user.completedModules?.length > 0) {
+      effectiveTotalPoints = user.completedModules.reduce((s, m) => s + (Number(m.score) || 0), 0);
+      if (user.totalPoints !== effectiveTotalPoints) {
+        user.totalPoints = effectiveTotalPoints;
+        if (typeof user.save === 'function') user.save().catch(() => {});
+      }
+    }
+
     return res.json({
       success: true,
       user: {
@@ -247,7 +259,7 @@ export const getMe = async (req, res) => {
         role: user.role,
         currentLevel: user.currentLevel,
         levelTitle: user.levelTitle,
-        totalPoints: user.totalPoints,
+        totalPoints: effectiveTotalPoints,
         nextLevelPoints: user.nextLevelPoints,
         streakDays: user.streakDays,
         badgesEarned: user.badgesEarned,

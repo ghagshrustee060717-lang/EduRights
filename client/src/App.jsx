@@ -3,8 +3,14 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 import AuthModal from './components/AuthModal';
+import QuizPage from './quiz/QuizPage';
 
 function AppContent() {
+  const isQuizRoute = window.location.pathname === '/quiz';
+  if (isQuizRoute) {
+    return <QuizPage moduleId="m1" onExit={() => { window.location.href = '/'; }} />;
+  }
+
   const { isAuthenticated, loading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');

@@ -1,10 +1,12 @@
 import React from 'react';
 import { Bell, Search, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getAvatarData } from '../utils/avatars';
 
 export const TopHeader = ({ onOpenProfile }) => {
   const { user } = useAuth();
   const userName = user?.name || 'Aarav';
+  const avatarData = getAvatarData(user?.avatar);
 
   return (
     <header style={{
@@ -91,22 +93,19 @@ export const TopHeader = ({ onOpenProfile }) => {
           onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: '42px',
+            height: '42px',
             borderRadius: '50%',
-            overflow: 'hidden',
-            border: '2px solid #fbbf24',
-            background: '#e0e7ff',
+            border: `2.5px solid ${avatarData.border}`,
+            background: avatarData.bg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.45rem',
+            boxShadow: `0 3px 10px ${avatarData.border}40`,
+            flexShrink: 0,
           }}>
-            <img
-              src="/assets/images/avatar_aarav.jpg"
-              alt={userName}
-              onError={(e) => {
-                // fallback to colored initial if image not found
-                e.target.style.display = 'none';
-              }}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            <span>{avatarData.emoji}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '0.88rem', fontWeight: '800', color: '#1e293b' }}>

@@ -1,14 +1,54 @@
 import React from 'react';
-import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const MODULE_CHAPTERS = [
+  {
+    id: 'm1',
+    chapterNum: 1,
+    title: 'Right to Education',
+    subtitle: 'Chapter 1 of 4',
+    description: 'Every child has the right to free and compulsory quality education.',
+  },
+  {
+    id: 'm2',
+    chapterNum: 2,
+    title: 'Right to Play',
+    subtitle: 'Chapter 2 of 4',
+    description: 'Rest, play, and recreational activities essential for every child.',
+  },
+  {
+    id: 'm3',
+    chapterNum: 3,
+    title: 'Right to Safety',
+    subtitle: 'Chapter 3 of 4',
+    description: 'Protection from harm, child safety rules, and emergency help lines.',
+  },
+  {
+    id: 'm4',
+    chapterNum: 4,
+    title: 'Right to Privacy',
+    subtitle: 'Chapter 4 of 4',
+    description: 'Online safety, personal boundaries, and protecting private data.',
+  },
+];
+
 export const AdventureCard = ({ onContinueAdventure }) => {
-  const { awardPoints } = useAuth();
+  const { user } = useAuth();
+  const completedModules = user?.completedModules || [];
+
+  // Determine current unfinished chapter
+  const nextChapter = MODULE_CHAPTERS.find(
+    (ch) => !completedModules.some((c) => c.moduleId === ch.id)
+  );
+
+  const isAllComplete = !nextChapter && completedModules.length > 0;
+  const activeChapter = nextChapter || MODULE_CHAPTERS[0];
 
   const handleContinue = () => {
-    // Award a mini celebration bonus when clicking continue
-    awardPoints(25);
-    if (onContinueAdventure) onContinueAdventure();
+    if (onContinueAdventure) {
+      onContinueAdventure(activeChapter.id);
+    }
   };
 
   return (
@@ -43,16 +83,16 @@ export const AdventureCard = ({ onContinueAdventure }) => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            background: '#ede9fe',
-            color: '#6d28d9',
+            background: isAllComplete ? '#dcfce7' : '#ede9fe',
+            color: isAllComplete ? '#15803d' : '#6d28d9',
             padding: '0.25rem 0.65rem',
             borderRadius: '9999px',
             fontSize: '0.75rem',
             fontWeight: '800',
             marginBottom: '0.6rem',
           }}>
-            <BookOpen size={12} />
-            <span>Chapter 2 of 5</span>
+            {isAllComplete ? <CheckCircle2 size={12} /> : <BookOpen size={12} />}
+            <span>{isAllComplete ? 'All 4 Chapters Completed!' : activeChapter.subtitle}</span>
           </div>
 
           <h3 style={{
@@ -61,7 +101,7 @@ export const AdventureCard = ({ onContinueAdventure }) => {
             color: '#1e1b4b',
             marginBottom: '0.4rem',
           }}>
-            Right to Education
+            {isAllComplete ? 'Explorer Champion!' : activeChapter.title}
           </h3>
 
           <p style={{
@@ -70,10 +110,13 @@ export const AdventureCard = ({ onContinueAdventure }) => {
             lineHeight: 1.5,
             marginBottom: '1.25rem',
           }}>
-            Every child has the right to free and compulsory quality education.
+            {isAllComplete
+              ? 'You have completed all child rights chapters! Review or retake any quiz to boost your XP score.'
+              : activeChapter.description}
           </p>
 
           <button
+            type="button"
             onClick={handleContinue}
             style={{
               background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
@@ -82,13 +125,16 @@ export const AdventureCard = ({ onContinueAdventure }) => {
               fontSize: '0.92rem',
               padding: '0.65rem 1.6rem',
               borderRadius: '9999px',
+              border: 'none',
+              cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
               boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+              transition: 'all 0.15s ease',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 6px 18px rgba(79, 70, 229, 0.45)';
             }}
             onMouseOut={(e) => {
@@ -96,12 +142,12 @@ export const AdventureCard = ({ onContinueAdventure }) => {
               e.currentTarget.style.boxShadow = '0 4px 14px rgba(79, 70, 229, 0.35)';
             }}
           >
-            <span>Continue</span>
+            <span>{isAllComplete ? 'Review Quizzes' : 'Start Chapter Quiz'}</span>
             <ArrowRight size={16} />
           </button>
         </div>
 
-        {/* Child Reading Illustration matching mockup */}
+        {/* Child Reading Illustration */}
         <div style={{
           width: '140px',
           height: '140px',

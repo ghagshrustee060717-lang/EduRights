@@ -12,7 +12,11 @@ export const getUserProfile = async (req, res) => {
     let user = null;
     if (mongoose.connection.readyState === 1) {
       try {
-        user = await User.findById(userId).select('-passwordHash');
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+          user = await User.findById(userId).select('-passwordHash');
+        } else if (req.user?.email) {
+          user = await User.findOne({ email: req.user.email.toLowerCase() }).select('-passwordHash');
+        }
       } catch (e) {
         user = null;
       }
@@ -29,6 +33,15 @@ export const getUserProfile = async (req, res) => {
       });
     }
 
+    let effectiveTotalPoints = user.totalPoints ?? 0;
+    if (user.email !== 'aarav@edurights.org' && user.completedModules?.length > 0) {
+      effectiveTotalPoints = user.completedModules.reduce((s, m) => s + (Number(m.score) || 0), 0);
+      if (user.totalPoints !== effectiveTotalPoints) {
+        user.totalPoints = effectiveTotalPoints;
+        if (typeof user.save === 'function') user.save().catch(() => {});
+      }
+    }
+
     return res.json({
       success: true,
       user: {
@@ -41,7 +54,7 @@ export const getUserProfile = async (req, res) => {
         role: user.role,
         currentLevel: user.currentLevel,
         levelTitle: user.levelTitle,
-        totalPoints: user.totalPoints,
+        totalPoints: effectiveTotalPoints,
         nextLevelPoints: user.nextLevelPoints,
         streakDays: user.streakDays,
         badgesEarned: user.badgesEarned,
@@ -75,10 +88,18 @@ export const updateUserProfile = async (req, res) => {
     let updatedUser = null;
     if (mongoose.connection.readyState === 1) {
       try {
-        updatedUser = await User.findByIdAndUpdate(userId, updates, {
-          new: true,
-          runValidators: true,
-        }).select('-passwordHash');
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+          updatedUser = await User.findByIdAndUpdate(userId, updates, {
+            new: true,
+            runValidators: true,
+          }).select('-passwordHash');
+        } else if (req.user?.email) {
+          updatedUser = await User.findOneAndUpdate(
+            { email: req.user.email.toLowerCase() },
+            updates,
+            { new: true, runValidators: true }
+          ).select('-passwordHash');
+        }
       } catch (e) {
         updatedUser = null;
       }

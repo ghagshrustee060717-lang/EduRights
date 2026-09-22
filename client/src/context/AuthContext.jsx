@@ -5,6 +5,21 @@ const AuthContext = createContext(null);
 
 const API_BASE = '/api';
 
+const parseResponse = async (res) => {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch (err) {
+    if (!res.ok) {
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        throw new Error('Unable to connect to the EduRights backend server. Please ensure the backend is running on port 5000.');
+      }
+      throw new Error(`Server error (${res.status}): ${res.statusText || 'Connection issue'}`);
+    }
+    throw new Error('Invalid response from server.');
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('edurights_token') || null);
@@ -40,9 +55,9 @@ export const AuthProvider = ({ children }) => {
             Authorization: `Bearer ${savedToken}`,
           },
         });
-        const data = await res.json();
+        const data = await parseResponse(res);
 
-        if (data.success && data.user) {
+        if (res.ok && data.success && data.user) {
           setUser(data.user);
           setToken(savedToken);
         } else {
@@ -70,10 +85,10 @@ export const AuthProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      const data = await parseResponse(res);
 
-      if (!data.success) {
-        throw new Error(data.message || 'Login failed');
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Login failed. Please check your email and password.');
       }
 
       localStorage.setItem('edurights_token', data.token);
@@ -101,10 +116,10 @@ export const AuthProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-      const data = await res.json();
+      const data = await parseResponse(res);
 
-      if (!data.success) {
-        throw new Error(data.message || 'Registration failed');
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Registration failed. Please check your information.');
       }
 
       localStorage.setItem('edurights_token', data.token);
@@ -138,8 +153,8 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify(updates),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Update failed');
+      const data = await parseResponse(res);
+      if (!res.ok || !data.success) throw new Error(data.message || 'Update failed');
 
       setUser(data.user);
       return { success: true, user: data.user };
@@ -148,7 +163,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Live gamification reward test
+  // Live gamification reward
   const awardPoints = async (points = 50, badge = null) => {
     if (!token) return;
     try {
@@ -160,14 +175,45 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify({ points, badge }),
       });
-      const data = await res.json();
-      if (data.success && data.user) {
+      const data = await parseResponse(res);
+      if (res.ok && data.success && data.user) {
         setUser(data.user);
         celebrate();
       }
     } catch (err) {
       console.error('Award points error:', err);
     }
+  };
+
+  // Refresh user data from backend
+  const refreshUser = async () => {
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await parseResponse(res);
+      if (res.ok && data.success && data.user) {
+        setUser(data.user);
+        return data.user;
+      }
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
+    return null;
+  };
+
+  // Immediate state update after quiz completion
+  const updateUserGamification = (gamificationData) => {
+    if (!gamificationData) return;
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ...gamificationData,
+      };
+    });
+    celebrate();
   };
 
   const value = {
@@ -182,6 +228,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     awardPoints,
+    refreshUser,
+    updateUserGamification,
     celebrate,
   };
 

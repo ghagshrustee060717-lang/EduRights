@@ -4,8 +4,12 @@ import { useAuth } from '../context/AuthContext';
 
 export const LevelCard = () => {
   const { user } = useAuth();
-  const currentXP = user?.totalPoints || 750;
-  const nextXP = user?.nextLevelPoints || 1200;
+  const completed = user?.completedModules || [];
+  const moduleScoreTotal = completed.reduce((sum, m) => sum + (Number(m.score) || 0), 0);
+  const currentXP = (user?.role === 'child' && completed.length > 0 && user?.email !== 'aarav@edurights.org')
+    ? moduleScoreTotal
+    : (user?.totalPoints ?? 0);
+  const nextXP = user?.nextLevelPoints || 500;
   const progressPercent = Math.min(Math.round((currentXP / nextXP) * 100), 100);
 
   return (
@@ -51,7 +55,7 @@ export const LevelCard = () => {
           justifyContent: 'center',
           border: '2px solid #ffffff',
         }}>
-          {user?.currentLevel || 3}
+          {user?.currentLevel || 1}
         </span>
       </div>
 
@@ -68,7 +72,7 @@ export const LevelCard = () => {
             fontWeight: '800',
             color: '#1e1b4b',
           }}>
-            {user?.levelTitle || 'Level 3 Explorer'}
+            {user?.levelTitle || 'Level 1 Beginner'}
           </h3>
           <span style={{
             fontSize: '0.85rem',

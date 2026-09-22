@@ -2,12 +2,7 @@ import React, { useState } from 'react';
 import { X, Sparkles, Shield, User, Mail, Lock, Globe, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const AVATARS = [
-  { id: 'superhero-aarav', name: 'Aarav (Superhero)', emoji: '🦸‍♂️' },
-  { id: 'explorer-maya', name: 'Maya (Explorer)', emoji: '🧭' },
-  { id: 'tech-leo', name: 'Leo (Techie)', emoji: '🚀' },
-  { id: 'scout-tara', name: 'Tara (Scout)', emoji: '⭐' },
-];
+import { AVATARS } from '../utils/avatars';
 
 export const AuthModal = ({ isOpen, initialMode = 'login', onClose, onSuccess }) => {
   const [mode, setMode] = useState(initialMode); // 'login' | 'register'
@@ -216,16 +211,41 @@ export const AuthModal = ({ isOpen, initialMode = 'login', onClose, onSuccess })
               background: '#fee2e2',
               border: '1px solid #f87171',
               color: '#b91c1c',
-              padding: '0.65rem 0.85rem',
-              borderRadius: '12px',
+              padding: '0.75rem 0.9rem',
+              borderRadius: '14px',
               fontSize: '0.85rem',
               display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
+              flexDirection: 'column',
+              gap: '0.35rem',
               marginBottom: '1rem',
             }}>
-              <AlertCircle size={16} />
-              <span>{localError}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '700' }}>
+                <AlertCircle size={16} />
+                <span>{localError}</span>
+              </div>
+              {mode === 'login' && (
+                <div style={{ fontSize: '0.8rem', color: '#7f1d1d', marginTop: '2px' }}>
+                  Don't have an account yet?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocalError('');
+                      setMode('register');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#4338ca',
+                      fontWeight: '800',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Click here to register as a New Explorer!
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -308,26 +328,33 @@ export const AuthModal = ({ isOpen, initialMode = 'login', onClose, onSuccess })
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#475569', marginBottom: '0.4rem' }}>
                     Choose Your Hero Mascot
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-                    {AVATARS.map((av) => (
-                      <button
-                        type="button"
-                        key={av.id}
-                        onClick={() => setSelectedAvatar(av.id)}
-                        style={{
-                          background: selectedAvatar === av.id ? '#ede9fe' : '#f8fafc',
-                          border: selectedAvatar === av.id ? '2px solid #6366f1' : '1px solid #e2e8f0',
-                          borderRadius: '14px',
-                          padding: '0.6rem 0.25rem',
-                          textAlign: 'center',
-                        }}
-                      >
-                        <div style={{ fontSize: '1.6rem' }}>{av.emoji}</div>
-                        <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#334155', marginTop: '2px' }}>
-                          {av.name.split(' ')[0]}
-                        </div>
-                      </button>
-                    ))}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
+                    {AVATARS.map((av) => {
+                      const isPicked = selectedAvatar === av.id;
+                      return (
+                        <button
+                          type="button"
+                          key={av.id}
+                          onClick={() => setSelectedAvatar(av.id)}
+                          style={{
+                            background: isPicked ? av.bg : '#f8fafc',
+                            border: isPicked ? `2.5px solid ${av.border}` : '1.5px solid #e2e8f0',
+                            borderRadius: '16px',
+                            padding: '0.65rem 0.25rem',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            transform: isPicked ? 'scale(1.05)' : 'scale(1)',
+                            boxShadow: isPicked ? `0 4px 12px ${av.border}50` : 'none',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ fontSize: '1.7rem' }}>{av.emoji}</div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: '800', color: isPicked ? '#1e1b4b' : '#334155', marginTop: '2px' }}>
+                            {av.name.split(' ')[0]}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </>
