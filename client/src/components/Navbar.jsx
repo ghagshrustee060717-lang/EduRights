@@ -51,30 +51,6 @@ export const Navbar = ({ onOpenAuth, onNavigateDashboard }) => {
         </span>
       </div>
 
-      {/* Nav Links */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '2.5rem',
-      }}>
-        {['Home', 'About', 'Learn', 'Library', 'Contact'].map((item, idx) => (
-          <a
-            key={item}
-            href={`#${item.toLowerCase()}`}
-            style={{
-              color: idx === 0 ? '#fbbf24' : '#cbd5e1',
-              fontWeight: idx === 0 ? '700' : '500',
-              fontSize: '0.95rem',
-              textDecoration: 'none',
-              transition: 'color 0.2s',
-            }}
-            onMouseOver={(e) => (e.target.style.color = '#fbbf24')}
-            onMouseOut={(e) => (e.target.style.color = idx === 0 ? '#fbbf24' : '#cbd5e1')}
-          >
-            {item}
-          </a>
-        ))}
-      </div>
 
       {/* Auth Action Buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

@@ -1,12 +1,16 @@
 import React from 'react';
-import { Award, Trophy, Star, ShieldCheck, Heart } from 'lucide-react';
+import { Trophy, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export const TrophyPreview = ({ onOpenTrophies }) => {
-  const badges = [
-    { id: 'b1', name: 'First Steps', color: '#38bdf8', bg: '#e0f2fe', icon: '🌟' },
-    { id: 'b2', name: 'Quiz Master', color: '#f59e0b', bg: '#fef3c7', icon: '🏆' },
-    { id: 'b3', name: 'Story Explorer', color: '#8b5cf6', bg: '#ede9fe', icon: '📖' },
-    { id: 'b4', name: 'Helper', color: '#10b981', bg: '#d1fae5', icon: '🤝' },
+  const { user } = useAuth();
+  const earnedBadges = user?.badgesEarned || [];
+
+  const defaultBadges = [
+    { id: 'first-step', name: 'First Step', color: '#f59e0b', bg: '#fef3c7', icon: '🏆' },
+    { id: 'quiz-master', name: 'Quiz Master', color: '#8b5cf6', bg: '#ede9fe', icon: '🌟' },
+    { id: 'point-collector', name: 'Collector', color: '#38bdf8', bg: '#e0f2fe', icon: '⭐' },
+    { id: 'rising-star', name: 'Rising Star', color: '#10b981', bg: '#d1fae5', icon: '🚀' },
   ];
 
   return (
@@ -24,18 +28,20 @@ export const TrophyPreview = ({ onOpenTrophies }) => {
           textTransform: 'uppercase',
           letterSpacing: '0.04em',
         }}>
-          Trophy Case
+          Trophy Case ({earnedBadges.length} unlocked)
         </div>
         <button
           onClick={onOpenTrophies}
           style={{
             background: 'transparent',
+            border: 'none',
             color: '#4f46e5',
             fontSize: '0.82rem',
             fontWeight: '800',
+            cursor: 'pointer',
           }}
         >
-          View All
+          View All →
         </button>
       </div>
 
@@ -51,48 +57,63 @@ export const TrophyPreview = ({ onOpenTrophies }) => {
         minHeight: '170px',
         alignItems: 'center',
       }}>
-        {badges.map((badge) => (
-          <div
-            key={badge.id}
-            style={{
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.4rem',
-              cursor: 'pointer',
-              transition: 'transform 0.15s ease',
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-3px)')}
-            onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-          >
-            {/* Medal circular badge */}
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              background: badge.bg,
-              border: `2px solid ${badge.color}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.4rem',
-              boxShadow: `0 4px 10px ${badge.color}33`,
-            }}>
-              {badge.icon}
+        {defaultBadges.map((badge) => {
+          const isUnlocked = earnedBadges.some(
+            (b) => b.badgeId === badge.id || b.name === badge.name
+          );
+
+          return (
+            <div
+              key={badge.id}
+              onClick={onOpenTrophies}
+              style={{
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.4rem',
+                cursor: 'pointer',
+                transition: 'transform 0.15s ease',
+                opacity: isUnlocked ? 1 : 0.65,
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-3px)')}
+              onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: isUnlocked ? badge.bg : '#f1f5f9',
+                border: isUnlocked ? `2px solid ${badge.color}` : '2px dashed #cbd5e1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.4rem',
+                boxShadow: isUnlocked ? `0 4px 10px ${badge.color}33` : 'none',
+              }}>
+                {isUnlocked ? badge.icon : <Lock size={16} color="#94a3b8" />}
+              </div>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: '800',
+                color: isUnlocked ? '#1e293b' : '#94a3b8',
+                lineHeight: 1.2,
+              }}>
+                {badge.name}
+              </span>
+              <span style={{
+                fontSize: '0.65rem',
+                fontWeight: '700',
+                color: isUnlocked ? '#15803d' : '#94a3b8',
+              }}>
+                {isUnlocked ? '✓ Unlocked' : 'Locked'}
+              </span>
             </div>
-            <span style={{
-              fontSize: '0.72rem',
-              fontWeight: '800',
-              color: '#334155',
-              lineHeight: 1.2,
-            }}>
-              {badge.name}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 };
+
 export default TrophyPreview;

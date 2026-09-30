@@ -7,9 +7,9 @@ import {
   Trophy,
   User,
   Settings,
-  LogOut,
+  Award,
   Shield,
-  Menu,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -18,10 +18,11 @@ export const Sidebar = ({ activeTab, onSelectTab, onOpenProfile, onOpenSettings 
 
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'map', label: 'Map', icon: Map },
+    { id: 'progress', label: 'My Progress', icon: Award },
     { id: 'quests', label: 'Quests', icon: Compass },
     { id: 'knowledge', label: 'Knowledge Hub', icon: BookOpen },
     { id: 'trophy', label: 'Trophy Case', icon: Trophy },
+    { id: 'map', label: 'Map', icon: Map },
     { id: 'profile', label: 'Profile', icon: User, action: onOpenProfile },
     { id: 'settings', label: 'Settings', icon: Settings, action: onOpenSettings },
   ];

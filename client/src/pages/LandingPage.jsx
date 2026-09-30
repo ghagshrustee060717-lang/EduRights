@@ -148,7 +148,7 @@ export const LandingPage = ({ onOpenAuth, onNavigateDashboard }) => {
         color: '#64748b',
         fontSize: '0.88rem',
       }}>
-        <p>© 2026 EduRights - Child Rights Learning Platform. Built for SFT-WEB-2026-042 (Person A: Auth & User System).</p>
+        <p>© 2026 EduRights - Child Rights Learning Platform. Empowering children through interactive education.</p>
       </footer>
     </div>
   );

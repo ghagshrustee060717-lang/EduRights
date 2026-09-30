@@ -8,6 +8,7 @@ export const RecommendedQuests = ({ onSelectQuest }) => {
   const quests = [
     {
       id: 'q_play',
+      moduleId: 'm2',
       title: 'Right to Play',
       xp: 50,
       iconType: 'soccer',
@@ -18,6 +19,7 @@ export const RecommendedQuests = ({ onSelectQuest }) => {
     },
     {
       id: 'q_safety',
+      moduleId: 'm3',
       title: 'Right to Safety',
       xp: 60,
       iconType: 'shield',
@@ -28,6 +30,7 @@ export const RecommendedQuests = ({ onSelectQuest }) => {
     },
     {
       id: 'q_privacy',
+      moduleId: 'm4',
       title: 'Right to Privacy',
       xp: 40,
       iconType: 'lock',
@@ -39,13 +42,6 @@ export const RecommendedQuests = ({ onSelectQuest }) => {
   ];
 
   const handleQuestClick = (quest) => {
-    // Award points live and celebrate
-    awardPoints(quest.xp, {
-      badgeId: `badge_${quest.id}`,
-      name: `${quest.title} Novice`,
-      icon: quest.iconEmoji,
-      description: `Completed introductory mission on ${quest.title}`,
-    });
     if (onSelectQuest) onSelectQuest(quest);
   };
 

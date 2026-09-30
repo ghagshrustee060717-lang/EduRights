@@ -46,19 +46,19 @@ const userSchema = new mongoose.Schema(
     // Gamification state attached to user profile (Person A shell + Person C sync)
     currentLevel: {
       type: Number,
-      default: 3,
+      default: 1,
     },
     levelTitle: {
       type: String,
-      default: 'Level 3 Explorer',
+      default: 'Level 1 Beginner',
     },
     totalPoints: {
       type: Number,
-      default: 750,
+      default: 0,
     },
     nextLevelPoints: {
       type: Number,
-      default: 1200,
+      default: 500,
     },
     streakDays: {
       type: Number,
