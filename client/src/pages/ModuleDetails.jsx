@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+
 import {
   ArrowLeft,
   CheckCircle2,
@@ -34,8 +35,9 @@ function ModuleDetails() {
   const navigate = useNavigate();
 
   const {
-    token,
     user,
+    token,
+    loading: authLoading,
     isAuthenticated,
     refreshProfile,
   } = useAuth();
@@ -48,9 +50,8 @@ function ModuleDetails() {
     (m) => String(m.id) === String(id)
   );
 
-  const [completed, setCompleted] = useState(
-    getCompletedModules()
-  );
+  const [completed, setCompleted] = useState([]);
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
   const [feedback, setFeedback] = useState(
     getModuleFeedback()
@@ -64,7 +65,41 @@ function ModuleDetails() {
 
   /*
    * ============================================
-   * LANGUAGE SUPPORT
+   * LOAD ACCOUNT-SPECIFIC PROGRESS
+   * ============================================
+   */
+
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (user) {
+      const backendCompleted =
+        Array.isArray(user.completedModules)
+          ? user.completedModules.map(
+              (item) => item.moduleId
+            )
+          : [];
+
+      setCompleted(backendCompleted);
+    } else {
+      setCompleted(getCompletedModules());
+    }
+
+    setFeedback(getModuleFeedback());
+
+    /*
+     * VERY IMPORTANT:
+     * Don't check whether the module is locked
+     * until progress has been loaded.
+     */
+    setProgressLoaded(true);
+  }, [user, authLoading]);
+
+  /*
+   * ============================================
+   * LANGUAGE
    * ============================================
    */
 
@@ -80,17 +115,18 @@ function ModuleDetails() {
 
   /*
    * ============================================
-   * MODULE ACCESS
+   * UNLOCK STATUS
    * ============================================
    */
 
-  const unlocked = module
-    ? isModuleUnlocked(
-        moduleIndex,
-        completed,
-        modules
-      )
-    : false;
+  const unlocked =
+    progressLoaded && module
+      ? isModuleUnlocked(
+          moduleIndex,
+          completed,
+          modules
+        )
+      : false;
 
   const isCompleted = module
     ? completed.includes(module.id)
@@ -100,15 +136,37 @@ function ModuleDetails() {
     ? feedback[module.id]
     : null;
 
+  /*
+   * ============================================
+   * REDIRECT ONLY AFTER PROGRESS LOADS
+   * ============================================
+   */
+
   useEffect(() => {
-    if (module && !unlocked) {
+    if (
+      authLoading ||
+      !progressLoaded ||
+      !module
+    ) {
+      return;
+    }
+
+    if (!unlocked) {
       navigate("/");
     }
-  }, [module, unlocked, navigate]);
+  }, [
+    authLoading,
+    progressLoaded,
+    module,
+    unlocked,
+    navigate,
+  ]);
 
-  /* ================================
-     MODULE NOT FOUND
-  ================================= */
+  /*
+   * ============================================
+   * MODULE NOT FOUND
+   * ============================================
+   */
 
   if (!module) {
     return (
@@ -126,7 +184,8 @@ function ModuleDetails() {
             <h1>Module Not Found</h1>
 
             <p>
-              We couldn't find this learning adventure.
+              We couldn't find this learning
+              adventure.
             </p>
 
             <button
@@ -143,107 +202,118 @@ function ModuleDetails() {
     );
   }
 
-  /* ================================
-     LOCKED MODULE
-  ================================= */
+  /*
+   * ============================================
+   * WAIT FOR PROGRESS
+   * ============================================
+   */
 
-  if (!unlocked) {
+  if (
+    authLoading ||
+    !progressLoaded
+  ) {
     return (
       <main className="details-page">
         <div className="details-container">
-          <button
-            type="button"
-            className="details-back-button"
-            onClick={() => navigate("/")}
+          <div
+            style={{
+              minHeight: "60vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#5B5FDE",
+              fontWeight: 800,
+              fontSize: "1.05rem",
+            }}
           >
-            <ArrowLeft size={18} />
-            Back to Adventure Map
-          </button>
-
-          <section className="locked-module-card">
-            <div className="locked-icon">
-              <Lock size={32} />
-            </div>
-
-            <span className="details-kicker">
-              ADVENTURE LOCKED
-            </span>
-
-            <h1>
-              {translatedModule.title}
-            </h1>
-
-            <p>
-              Complete the previous adventure to unlock
-              this module.
-            </p>
-
-            <button
-              type="button"
-              className="details-primary-button"
-              onClick={() => navigate("/")}
-            >
-              <ArrowLeft size={18} />
-              Go Back to Modules
-            </button>
-          </section>
+            Loading your adventure... 🚀
+          </div>
         </div>
       </main>
     );
   }
 
-  /* ================================
-     COMPLETE MODULE
-  ================================= */
+  /*
+   * If the module is genuinely locked,
+   * the effect above will take the user back.
+   */
+  if (!unlocked) {
+    return null;
+  }
+
+  /*
+   * ============================================
+   * COMPLETE MODULE
+   * ============================================
+   */
 
   const handleComplete = async () => {
-    if (isCompleted || savingProgress) {
+    if (
+      isCompleted ||
+      savingProgress
+    ) {
       return;
     }
 
     setProgressError("");
 
-    const updated = markModuleComplete(
+    /*
+     * Update the UI immediately.
+     */
+    const updated = completed.includes(
       module.id
-    );
+    )
+      ? completed
+      : [...completed, module.id];
 
     setCompleted(updated);
 
-    if (isAuthenticated && token) {
-      try {
-        setSavingProgress(true);
+    /*
+     * Logged-out users:
+     * use localStorage.
+     */
+    if (!isAuthenticated || !token) {
+      markModuleComplete(module.id);
+      return;
+    }
 
-        await awardUserPoints(token, {
-          points: 100,
+    /*
+     * Logged-in users:
+     * save to MongoDB.
+     */
+    try {
+      setSavingProgress(true);
 
-          completedModule: {
-            moduleId: module.id,
-            title:
-              translatedModule.title ||
-              module.title,
-            score: 100,
-          },
-        });
+      await awardUserPoints(token, {
+        points: 100,
 
-        await refreshProfile();
-      } catch (error) {
-        console.error(
-          "Failed to save module progress:",
-          error
-        );
+        completedModule: {
+          moduleId: module.id,
+          title: module.title,
+          score: 100,
+        },
+      });
 
-        setProgressError(
-          "Your module was completed, but we couldn't save your progress to your account. Please try again."
-        );
-      } finally {
-        setSavingProgress(false);
-      }
+      await refreshProfile();
+    } catch (error) {
+      console.error(
+        "Failed to save module progress:",
+        error
+      );
+
+      setProgressError(
+        "Your module was completed, but we couldn't save your progress to your account. Please try again."
+      );
+    } finally {
+      setSavingProgress(false);
     }
   };
 
-  /* ================================
-     FEEDBACK
-  ================================= */
+  /*
+   * ============================================
+   * FEEDBACK
+   * ============================================
+   */
 
   const handleFeedback = (emoji) => {
     const updated = saveModuleFeedback(
@@ -251,12 +321,16 @@ function ModuleDetails() {
       emoji
     );
 
-    setFeedback({ ...updated });
+    setFeedback({
+      ...updated,
+    });
   };
 
-  /* ================================
-     COLORS
-  ================================= */
+  /*
+   * ============================================
+   * COLORS
+   * ============================================
+   */
 
   const colors = [
     "#4f46e5",
@@ -268,13 +342,17 @@ function ModuleDetails() {
   const color =
     colors[moduleIndex % colors.length];
 
+  /*
+   * ============================================
+   * MAIN UI
+   * ============================================
+   */
+
   return (
     <main className="details-page">
       <div className="details-container">
 
-        {/* ================================
-            BACK BUTTON
-        ================================= */}
+        {/* BACK BUTTON */}
 
         <button
           type="button"
@@ -285,9 +363,7 @@ function ModuleDetails() {
           Back to Adventure Map
         </button>
 
-        {/* ================================
-            HERO
-        ================================= */}
+        {/* HERO */}
 
         <section
           className="details-hero"
@@ -329,9 +405,7 @@ function ModuleDetails() {
           )}
         </section>
 
-        {/* ================================
-            LEARNING CONTENT
-        ================================= */}
+        {/* CONTENT */}
 
         <section className="details-content-card">
 
@@ -342,6 +416,7 @@ function ModuleDetails() {
 
             <div>
               <span>LET'S LEARN</span>
+
               <h2>
                 Discover Your Rights
               </h2>
@@ -349,6 +424,7 @@ function ModuleDetails() {
           </div>
 
           <div className="lesson-blocks">
+
             {translatedModule.content.map(
               (block, index) => (
                 <div
@@ -370,15 +446,17 @@ function ModuleDetails() {
                 </div>
               )
             )}
+
           </div>
 
-          {/* ================================
-              COMPLETION
-          ================================= */}
+          {/* COMPLETION */}
 
           <div className="lesson-completion">
+
             {isCompleted ? (
+
               <div className="completion-success">
+
                 <div className="completion-success-icon">
                   <CheckCircle2 size={28} />
                 </div>
@@ -389,8 +467,9 @@ function ModuleDetails() {
                   </h3>
 
                   <p>
-                    Great job, Explorer! You unlocked
-                    the next adventure. 🚀
+                    Great job, Explorer!
+                    You unlocked the next
+                    adventure. 🚀
                   </p>
                 </div>
 
@@ -409,22 +488,29 @@ function ModuleDetails() {
                     }}
                   />
                 </button>
+
               </div>
+
             ) : (
+
               <div className="completion-prompt">
+
                 <div className="completion-prompt-icon">
                   <Sparkles size={23} />
                 </div>
 
                 <div className="completion-prompt-text">
+
                   <h3>
                     Finished this adventure?
                   </h3>
 
                   <p>
-                    Mark it complete to unlock the
-                    next learning adventure.
+                    Mark it complete to
+                    unlock the next learning
+                    adventure.
                   </p>
+
                 </div>
 
                 <button
@@ -438,42 +524,48 @@ function ModuleDetails() {
                     : "⭐ Mark as Complete"}
                 </button>
 
-                {progressError && (
-                  <p
-                    style={{
-                      width: "100%",
-                      marginTop: "10px",
-                      color: "#be123c",
-                      fontSize: "13px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {progressError}
-                  </p>
-                )}
               </div>
+
             )}
+
+            {progressError && (
+              <p
+                style={{
+                  marginTop: "1rem",
+                  color: "#dc2626",
+                  textAlign: "center",
+                  fontSize: "0.9rem",
+                }}
+              >
+                {progressError}
+              </p>
+            )}
+
           </div>
 
-          {/* ================================
-              FEEDBACK
-          ================================= */}
+          {/* FEEDBACK */}
 
           <div className="feedback-section">
+
             <div className="feedback-heading">
+
               <h3>
-                How did this adventure make you feel?
+                How did this adventure
+                make you feel?
               </h3>
 
               <p>
-                Your feedback helps us make learning
-                better! 💜
+                Your feedback helps us
+                make learning better! 💜
               </p>
+
             </div>
 
             <div className="feedback-options">
+
               {FEEDBACK_OPTIONS.map(
                 (option) => {
+
                   const isSelected =
                     selectedFeedback ===
                     option.emoji;
@@ -493,9 +585,7 @@ function ModuleDetails() {
                         )
                       }
                       title={option.label}
-                      aria-label={
-                        option.label
-                      }
+                      aria-label={option.label}
                     >
                       <span>
                         {option.emoji}
@@ -508,28 +598,31 @@ function ModuleDetails() {
                   );
                 }
               )}
+
             </div>
 
             {selectedFeedback && (
               <p className="feedback-thanks">
-                Thanks for sharing how you feel! 💜
+                Thanks for sharing how
+                you feel! 💜
               </p>
             )}
+
           </div>
+
         </section>
 
-        {/* ================================
-            FOOTER
-        ================================= */}
+        {/* FOOTER */}
 
         <div className="details-footer-message">
           <Sparkles size={16} />
 
-          Every right you learn makes you a stronger
-          Explorer!
+          Every right you learn makes
+          you a stronger Explorer!
 
           <Sparkles size={16} />
         </div>
+
       </div>
     </main>
   );
