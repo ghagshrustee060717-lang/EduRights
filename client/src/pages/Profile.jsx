@@ -40,18 +40,9 @@ function Profile() {
   const [languageSaving, setLanguageSaving] = useState(false);
   const [languageMessage, setLanguageMessage] = useState("");
 
-  /*
-   * ============================================
-   * LOAD PROGRESS
-   * ============================================
-   *
-   * Logged-in users:
-   * Use progress stored in MongoDB through
-   * AuthContext.
-   *
-   * Logged-out users:
-   * Keep the existing localStorage behavior.
-   */
+  /* ============================================
+     LOAD PROGRESS
+  ============================================ */
 
   useEffect(() => {
     if (authLoading) {
@@ -59,34 +50,27 @@ function Profile() {
     }
 
     if (user) {
-      const backendCompleted = Array.isArray(user.completedModules)
-        ? user.completedModules.map((module) => module.moduleId)
+      const backendCompleted = Array.isArray(
+        user.completedModules
+      )
+        ? user.completedModules.map(
+            (module) => module.moduleId
+          )
         : [];
 
       setCompleted(backendCompleted);
-
-      /*
-       * Feedback is still stored locally for now.
-       */
       setFeedback(getModuleFeedback());
-
       setProfileLoading(false);
     } else {
-      /*
-       * Fallback for logged-out users.
-       */
       setCompleted(getCompletedModules());
       setFeedback(getModuleFeedback());
-
       setProfileLoading(false);
     }
   }, [user, authLoading]);
 
-  /*
-   * ============================================
-   * LANGUAGE
-   * ============================================
-   */
+  /* ============================================
+     LANGUAGE
+  ============================================ */
 
   const handleLanguageChange = async (event) => {
     const language = event.target.value;
@@ -97,72 +81,130 @@ function Profile() {
 
       await saveProfile({ language });
 
-      setLanguageMessage("Language updated successfully! 🌐");
+      setLanguageMessage(
+        "Language updated successfully! 🌐"
+      );
     } catch (error) {
-      console.error("Failed to update language:", error);
-      setLanguageMessage("Couldn't update language. Please try again.");
+      console.error(
+        "Failed to update language:",
+        error
+      );
+
+      setLanguageMessage(
+        "Couldn't update language. Please try again."
+      );
     } finally {
       setLanguageSaving(false);
     }
   };
 
-  /*
-   * ============================================
-   * XP / LEVEL
-   * ============================================
-   */
+  /* ============================================
+     XP / LEVEL
+  ============================================ */
 
   const localXP = getXP(completed);
   const localLevelInfo = getLevelInfo(localXP);
-
-  /*
-   * For logged-in users, use the backend's
-   * totalPoints and level information.
-   */
 
   const xp = user
     ? Number(user.totalPoints || 0)
     : localXP;
 
+  /*
+   * Level thresholds:
+   *
+   * Level 1 = 0 XP
+   * Level 2 = 100 XP
+   * Level 3 = 250 XP
+   * Level 4 = 500 XP
+   * Level 5 = 1000 XP
+   *
+   * The progress bar shows progress INSIDE
+   * the current level, not total XP progress.
+   */
+
   const levelInfo = user
-    ? {
-        level: Number(user.currentLevel || 1),
+    ? (() => {
+        const level = Number(
+          user.currentLevel || 1
+        );
 
-        title:
-          user.levelTitle ||
-          "Level 1 Beginner",
+        const totalXP = Number(
+          user.totalPoints || 0
+        );
 
-        currentXP: Number(user.totalPoints || 0),
+        const nextLevelXP = Number(
+          user.nextLevelPoints || 500
+        );
 
-        progressPercent:
-          Number(user.nextLevelPoints || 500) > 0
+        const levelStartXP = {
+          1: 0,
+          2: 100,
+          3: 250,
+          4: 500,
+          5: 1000,
+        };
+
+        /* ---------- MAX LEVEL ---------- */
+
+        if (level >= 5) {
+          return {
+            level: 5,
+            title:
+              user.levelTitle ||
+              "Rights Champion",
+            currentXP: totalXP,
+            progressPercent: 100,
+            nextLevelXP: 1000,
+            nextLevelTitle: "Max Level",
+            isMaxLevel: true,
+          };
+        }
+
+        /* ---------- CURRENT LEVEL ---------- */
+
+        const startXP =
+          levelStartXP[level] ?? 0;
+
+        const levelXPRange =
+          nextLevelXP - startXP;
+
+        const earnedInCurrentLevel =
+          totalXP - startXP;
+
+        const progressPercent =
+          levelXPRange > 0
             ? Math.min(
                 100,
-                Math.round(
-                  (Number(user.totalPoints || 0) /
-                    Number(user.nextLevelPoints || 500)) *
-                    100
+                Math.max(
+                  0,
+                  Math.round(
+                    (earnedInCurrentLevel /
+                      levelXPRange) *
+                      100
+                  )
                 )
               )
-            : 0,
+            : 0;
 
-        nextLevelXP: Number(
-          user.nextLevelPoints || 500
-        ),
-
-        nextLevelTitle: `Level ${
-          Number(user.currentLevel || 1) + 1
-        }`,
-
-        isMaxLevel: false,
-      }
+        return {
+          level,
+          title:
+            user.levelTitle ||
+            `Level ${level}`,
+          currentXP: totalXP,
+          progressPercent,
+          nextLevelXP,
+          nextLevelTitle: `Level ${
+            level + 1
+          }`,
+          isMaxLevel: false,
+        };
+      })()
     : localLevelInfo;
 
-  /*
-   * ============================================
-   * BADGES
-   * ============================================
-   */
+  /* ============================================
+     BADGES
+  ============================================ */
 
   const localBadges = getBadges(
     completed,
@@ -198,7 +240,9 @@ function Profile() {
             label:
               backendBadge?.name ||
               localBadge.label ||
-              `Explorer Badge ${index + 1}`,
+              `Explorer Badge ${
+                index + 1
+              }`,
 
             description:
               backendBadge?.description ||
@@ -221,25 +265,22 @@ function Profile() {
     (badge) => badge.unlocked
   ).length;
 
-  /*
-   * ============================================
-   * COMPLETION %
-   * ============================================
-   */
+  /* ============================================
+     MODULE COMPLETION %
+  ============================================ */
 
   const completionPercent =
     modules.length > 0
       ? Math.round(
-          (completed.length / modules.length) *
+          (completed.length /
+            modules.length) *
             100
         )
       : 0;
 
-  /*
-   * ============================================
-   * LOADING STATE
-   * ============================================
-   */
+  /* ============================================
+     LOADING STATE
+  ============================================ */
 
   if (authLoading || profileLoading) {
     return (
@@ -296,7 +337,7 @@ function Profile() {
 
       <div className="profile-container">
 
-        {/* ================================
+        {/* =================================
             BACK
         ================================= */}
 
@@ -309,7 +350,7 @@ function Profile() {
           Back to Adventure Map
         </button>
 
-        {/* ================================
+        {/* =================================
             HERO
         ================================= */}
 
@@ -317,6 +358,7 @@ function Profile() {
           <div className="profile-hero-circle-one" />
           <div className="profile-hero-circle-two" />
 
+          {/* Avatar */}
           <div className="profile-avatar">
             {user?.avatar ===
             "superhero-aarav"
@@ -333,22 +375,31 @@ function Profile() {
               : "🧭"}
           </div>
 
+          {/* Current Level */}
           <span className="profile-level">
             LEVEL {levelInfo.level}
           </span>
 
+          {/* User Name */}
           <h1>
             {user?.name
               ? `${user.name}'s Adventure`
               : levelInfo.title}
           </h1>
 
+          {/* XP */}
           <div className="profile-xp">
             <Zap size={18} />
             {xp} XP
           </div>
 
+          {/* =================================
+              LEVEL PROGRESS
+          ================================= */}
+
           <div className="profile-xp-progress">
+
+            {/* Progress Bar */}
             <div className="profile-xp-track">
               <div
                 className="profile-xp-fill"
@@ -358,6 +409,30 @@ function Profile() {
               />
             </div>
 
+            {/* Current Level → Next Level */}
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "10px",
+                marginBottom: "4px",
+                fontSize: "13px",
+                fontWeight: 800,
+                color:
+                  "rgba(255, 255, 255, 0.9)",
+                letterSpacing: "0.5px",
+              }}
+            >
+              {levelInfo.isMaxLevel ? (
+                "🏆 MAX LEVEL"
+              ) : (
+                <>
+                  LEVEL {levelInfo.level} →{" "}
+                  {levelInfo.nextLevelTitle.toUpperCase()}
+                </>
+              )}
+            </div>
+
+            {/* XP Remaining + Percentage */}
             <div className="profile-xp-text">
               {levelInfo.isMaxLevel ? (
                 <span>
@@ -381,15 +456,17 @@ function Profile() {
                 {levelInfo.progressPercent}%
               </strong>
             </div>
+
           </div>
         </section>
 
-        {/* ================================
+        {/* =================================
             QUICK STATS
         ================================= */}
 
         <section className="profile-stats">
 
+          {/* Adventures */}
           <div className="profile-stat-card">
             <div className="profile-stat-icon purple">
               <Trophy size={22} />
@@ -405,6 +482,7 @@ function Profile() {
             </div>
           </div>
 
+          {/* Total XP */}
           <div className="profile-stat-card">
             <div className="profile-stat-icon gold">
               <Zap size={22} />
@@ -419,6 +497,7 @@ function Profile() {
             </div>
           </div>
 
+          {/* Badges */}
           <div className="profile-stat-card">
             <div className="profile-stat-icon green">
               <Award size={22} />
@@ -434,13 +513,14 @@ function Profile() {
             </div>
           </div>
 
+          {/* Module Progress */}
           <div className="profile-stat-card">
             <div className="profile-stat-icon coral">
               <Target size={22} />
             </div>
 
             <div>
-              <span>Progress</span>
+              <span>Module Progress</span>
 
               <strong>
                 {completionPercent}%
@@ -450,7 +530,7 @@ function Profile() {
 
         </section>
 
-        {/* ================================
+        {/* =================================
             LANGUAGE
         ================================= */}
 
@@ -462,16 +542,25 @@ function Profile() {
             }}
           >
             <div className="profile-card-heading">
+
               <div className="profile-card-title">
+
                 <div className="profile-card-title-icon blue">
                   🌐
                 </div>
 
                 <div>
-                  <span>LEARNING PREFERENCE</span>
-                  <h2>Language</h2>
+                  <span>
+                    LEARNING PREFERENCE
+                  </span>
+
+                  <h2>
+                    Language
+                  </h2>
                 </div>
+
               </div>
+
             </div>
 
             <div
@@ -484,12 +573,15 @@ function Profile() {
             >
               <select
                 value={user?.language || "en"}
-                onChange={handleLanguageChange}
+                onChange={
+                  handleLanguageChange
+                }
                 disabled={languageSaving}
                 style={{
                   padding: "12px 16px",
                   borderRadius: "12px",
-                  border: "1px solid #e2e8f0",
+                  border:
+                    "1px solid #e2e8f0",
                   background: "#ffffff",
                   color: "#1e293b",
                   fontSize: "15px",
@@ -550,14 +642,16 @@ function Profile() {
           </section>
         )}
 
-        {/* ================================
+        {/* =================================
             BADGES
         ================================= */}
 
         <section className="profile-card">
 
           <div className="profile-card-heading">
+
             <div className="profile-card-title">
+
               <div className="profile-card-title-icon">
                 <Award size={21} />
               </div>
@@ -567,17 +661,22 @@ function Profile() {
                   YOUR COLLECTION
                 </span>
 
-                <h2>Badges</h2>
+                <h2>
+                  Badges
+                </h2>
               </div>
+
             </div>
 
             <div className="profile-badge-count">
               {unlockedCount} /{" "}
               {badges.length}
             </div>
+
           </div>
 
           <div className="badge-grid">
+
             {badges.map((badge) => (
               <div
                 key={badge.id}
@@ -587,6 +686,7 @@ function Profile() {
                     : "badge-locked"
                 }`}
               >
+
                 <div className="badge-icon">
                   {badge.unlocked ? (
                     badge.icon
@@ -595,7 +695,9 @@ function Profile() {
                   )}
                 </div>
 
-                <h3>{badge.label}</h3>
+                <h3>
+                  {badge.label}
+                </h3>
 
                 <p>
                   {badge.description}
@@ -615,20 +717,24 @@ function Profile() {
                     Keep exploring
                   </div>
                 )}
+
               </div>
             ))}
+
           </div>
 
         </section>
 
-        {/* ================================
+        {/* =================================
             MODULE PROGRESS
         ================================= */}
 
         <section className="profile-card">
 
           <div className="profile-card-heading">
+
             <div className="profile-card-title">
+
               <div className="profile-card-title-icon blue">
                 <BookProgressIcon />
               </div>
@@ -642,14 +748,17 @@ function Profile() {
                   Adventure Progress
                 </h2>
               </div>
+
             </div>
 
             <div className="profile-badge-count">
               {completionPercent}%
             </div>
+
           </div>
 
           <div className="profile-module-list">
+
             {modules.map(
               (module, index) => {
                 const isComplete =
@@ -672,6 +781,7 @@ function Profile() {
                         : ""
                     }`}
                   >
+
                     <div className="profile-module-number">
                       {isComplete ? (
                         <CheckCircle2
@@ -707,15 +817,17 @@ function Profile() {
                         ? "Available"
                         : "Locked"}
                     </div>
+
                   </div>
                 );
               }
             )}
+
           </div>
 
         </section>
 
-        {/* ================================
+        {/* =================================
             ENCOURAGEMENT
         ================================= */}
 
