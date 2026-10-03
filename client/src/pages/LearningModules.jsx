@@ -22,6 +22,14 @@ function LearningModules() {
     loading: authLoading,
   } = useAuth();
 
+  /*
+   * Selected language comes from the logged-in user's
+   * MongoDB profile.
+   *
+   * If no language is available, English is used.
+   */
+  const selectedLanguage = user?.language || "en";
+
   const [modules, setModules] = useState(localModules);
   const [completed, setCompleted] = useState([]);
   const [feedback, setFeedback] = useState({});
@@ -557,6 +565,17 @@ function LearningModules() {
               modules
             );
 
+            /*
+             * Pick the translation for the current user.
+             *
+             * If the selected language does not exist,
+             * fall back to English, then the original module.
+             */
+            const displayModule =
+              module.languageVariants?.[selectedLanguage] ||
+              module.languageVariants?.en ||
+              module;
+
             return (
               <div
                 key={module.id}
@@ -570,7 +589,15 @@ function LearningModules() {
                 }}
               >
                 <ModuleCard
-                  module={module}
+                  module={{
+                    ...module,
+                    title:
+                      displayModule.title ||
+                      module.title,
+                    topic:
+                      displayModule.topic ||
+                      module.topic,
+                  }}
                   index={index}
                   locked={!unlocked}
                   completed={completed.includes(module.id)}
