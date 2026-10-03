@@ -1,6 +1,49 @@
 const API_BASE_URL = "http://localhost:5000/api";
 
 /* ================================
+   AUTHENTICATION
+================================ */
+
+export const loginUser = async (email, password) => {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Login failed");
+  }
+
+  return data;
+};
+
+export const registerUser = async (userData) => {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Registration failed");
+  }
+
+  return data;
+};
+
+/* ================================
    MODULES
 ================================ */
 
@@ -15,9 +58,7 @@ export const getModules = async () => {
 };
 
 export const getModuleById = async (moduleId) => {
-  const response = await fetch(
-    `${API_BASE_URL}/modules/${moduleId}`
-  );
+  const response = await fetch(`${API_BASE_URL}/modules/${moduleId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch module");
@@ -41,9 +82,7 @@ export const getArticles = async () => {
 };
 
 export const getArticleById = async (articleId) => {
-  const response = await fetch(
-    `${API_BASE_URL}/articles/${articleId}`
-  );
+  const response = await fetch(`${API_BASE_URL}/articles/${articleId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch article");
@@ -53,56 +92,64 @@ export const getArticleById = async (articleId) => {
 };
 
 /* ================================
-   USER PROFILE
+   AUTHENTICATED USER PROFILE
 ================================ */
 
 export const getProfile = async (token) => {
-  const response = await fetch(
-    `${API_BASE_URL}/users/me`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
 
   if (!response.ok) {
-    throw new Error("Failed to fetch profile");
+    throw new Error(data.message || "Failed to fetch profile");
   }
 
-  return response.json();
+  return data;
+};
+
+export const updateProfile = async (token, profileData) => {
+  const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to update profile");
+  }
+
+  return data;
 };
 
 /* ================================
-   USER PROGRESS
+   USER PROGRESS / GAMIFICATION
 ================================ */
 
-export const updateProgress = async (
-  token,
-  completedModules,
-  xp,
-  badges
-) => {
-  const response = await fetch(
-    `${API_BASE_URL}/users/progress`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        completedModules,
-        xp,
-        badges,
-      }),
-    }
-  );
+export const awardUserPoints = async (token, progressData) => {
+  const response = await fetch(`${API_BASE_URL}/users/award-points`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(progressData),
+  });
+
+  const data = await response.json();
 
   if (!response.ok) {
-    throw new Error("Failed to update progress");
+    throw new Error(data.message || "Failed to update user progress");
   }
 
-  return response.json();
+  return data;
 };

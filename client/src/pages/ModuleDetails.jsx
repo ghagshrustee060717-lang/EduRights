@@ -19,6 +19,9 @@ import {
   saveModuleFeedback,
 } from "../utils/progress";
 
+import { useAuth } from "../context/AuthContext";
+import { awardUserPoints } from "../services/api";
+
 const FEEDBACK_OPTIONS = [
   { emoji: "😡", label: "Didn't like it" },
   { emoji: "😐", label: "It was okay" },
@@ -29,6 +32,8 @@ const FEEDBACK_OPTIONS = [
 function ModuleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const { token, isAuthenticated, refreshProfile } = useAuth();
 
   const module = modules.find(
     (m) => String(m.id) === String(id)
@@ -45,6 +50,9 @@ function ModuleDetails() {
   const [feedback, setFeedback] = useState(
     getModuleFeedback()
   );
+
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [progressError, setProgressError] = useState("");
 
   const unlocked = module
     ? isModuleUnlocked(
@@ -156,9 +164,55 @@ function ModuleDetails() {
      COMPLETE MODULE
   ================================= */
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (isCompleted || savingProgress) {
+      return;
+    }
+
+    setProgressError("");
+
+    /*
+      First update the existing local progress system.
+      This keeps the current UI and module unlocking behavior working.
+    */
     const updated = markModuleComplete(module.id);
     setCompleted(updated);
+
+    /*
+      If the learner is logged in, also persist the completion
+      and award XP through the backend.
+    */
+    if (isAuthenticated && token) {
+      try {
+        setSavingProgress(true);
+
+        await awardUserPoints(token, {
+          points: 100,
+          completedModule: {
+            moduleId: module.id,
+            title: module.title,
+            score: 100,
+          },
+        });
+
+        /*
+          Refresh the authenticated user so AuthContext immediately
+          contains the latest points, level and completed modules.
+        */
+        await refreshProfile();
+      } catch (error) {
+        console.error(
+          "Failed to save module progress:",
+          error
+        );
+
+        setProgressError(
+          "Your module was completed, but we couldn't save your progress to your account. Please try again."
+        );
+      } finally {
+        setSavingProgress(false);
+      }
+    }
   };
 
   /* ================================
@@ -338,12 +392,36 @@ function ModuleDetails() {
                   type="button"
                   className="details-complete-button"
                   onClick={handleComplete}
+                  disabled={savingProgress}
                 >
-                  ⭐ Mark as Complete
+                  {savingProgress
+                    ? "Saving Progress..."
+                    : "⭐ Mark as Complete"}
                 </button>
               </div>
             )}
           </div>
+
+          {/* ================================
+              BACKEND PROGRESS MESSAGE
+          ================================= */}
+
+          {progressError && (
+            <div
+              style={{
+                marginTop: "14px",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "#fff1f2",
+                border: "1px solid #fecdd3",
+                color: "#be123c",
+                fontSize: "13px",
+                fontWeight: 600,
+              }}
+            >
+              {progressError}
+            </div>
+          )}
 
           {/* ================================
               FEEDBACK

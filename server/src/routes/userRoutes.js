@@ -1,13 +1,17 @@
 import express from "express";
-import auth from "../middleware/auth.js";
 import {
-  getProfile,
-  updateProgress
+  getUserProfile,
+  updateUserProfile,
+  awardUserPoints,
 } from "../controllers/userController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/me", auth, getProfile);
-router.put("/progress", auth, updateProgress);
+router.get("/profile", protect, getUserProfile);
+
+router.put("/profile", protect, updateUserProfile);
+
+router.post("/award-points", protect, awardUserPoints);
 
 export default router;

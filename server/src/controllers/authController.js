@@ -7,125 +7,176 @@ const generateToken = (user) => {
     {
       id: user._id.toString(),
       email: user.email,
-      role: user.role
+      role: user.role,
     },
     process.env.JWT_SECRET || "edurights-development-secret",
     {
-      expiresIn: "7d"
+      expiresIn: "7d",
     }
   );
 };
 
-// Register a new user
-export const register = async (req, res) => {
+const buildUserResponse = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  age: user.age,
+  language: user.language,
+  avatar: user.avatar,
+  role: user.role,
+  currentLevel: user.currentLevel,
+  levelTitle: user.levelTitle,
+  totalPoints: user.totalPoints,
+  nextLevelPoints: user.nextLevelPoints,
+  streakDays: user.streakDays,
+  badgesEarned: user.badgesEarned,
+  completedModules: user.completedModules,
+});
+
+/* ================================
+   REGISTER
+================================ */
+
+export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const {
+      name,
+      email,
+      password,
+      age,
+      language = "en",
+      avatar = "superhero-aarav",
+    } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
-        message: "Name, email and password are required"
+        success: false,
+        message: "Name, email and password are required",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
 
     const existingUser = await User.findOne({
-      email: normalizedEmail
+      email: normalizedEmail,
     });
 
     if (existingUser) {
       return res.status(409).json({
-        message: "An account with this email already exists"
+        success: false,
+        message: "An account with this email already exists",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name: name.trim(),
+      name,
       email: normalizedEmail,
-      password: hashedPassword,
-      role: "student"
+      passwordHash,
+      age,
+      language,
+      avatar,
+      role: "child",
     });
 
     const token = generateToken(user);
 
     return res.status(201).json({
+      success: true,
       message: "Registration successful",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        completedModules: user.completedModules,
-        xp: user.xp,
-        badges: user.badges
-      }
+      user: buildUserResponse(user),
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Register error:", error);
 
     return res.status(500).json({
-      message: "Server error during registration"
+      success: false,
+      message: "Registration failed",
     });
   }
 };
 
-// Login an existing user
-export const login = async (req, res) => {
+/* ================================
+   LOGIN
+================================ */
+
+export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
-        message: "Email and password are required"
+        success: false,
+        message: "Email and password are required",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-
     const user = await User.findOne({
-      email: normalizedEmail
+      email: email.trim().toLowerCase(),
     });
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid email or password"
+        success: false,
+        message: "Invalid email or password",
       });
     }
 
-    const passwordMatch = await bcrypt.compare(
+    const passwordMatches = await bcrypt.compare(
       password,
-      user.password
+      user.passwordHash
     );
 
-    if (!passwordMatch) {
+    if (!passwordMatches) {
       return res.status(401).json({
-        message: "Invalid email or password"
+        success: false,
+        message: "Invalid email or password",
       });
     }
 
     const token = generateToken(user);
 
     return res.status(200).json({
+      success: true,
       message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        completedModules: user.completedModules,
-        xp: user.xp,
-        badges: user.badges
-      }
+      user: buildUserResponse(user),
     });
   } catch (error) {
     console.error("Login error:", error);
 
     return res.status(500).json({
-      message: "Server error during login"
+      success: false,
+      message: "Login failed",
+    });
+  }
+};
+
+/* ================================
+   CURRENT USER
+================================ */
+
+export const getMe = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      user: buildUserResponse(req.user),
+    });
+  } catch (error) {
+    console.error("Get current user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load user profile",
     });
   }
 };
