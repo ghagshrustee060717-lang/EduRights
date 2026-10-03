@@ -33,7 +33,12 @@ function ModuleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { token, isAuthenticated, refreshProfile } = useAuth();
+  const {
+    token,
+    user,
+    isAuthenticated,
+    refreshProfile,
+  } = useAuth();
 
   const module = modules.find(
     (m) => String(m.id) === String(id)
@@ -51,8 +56,33 @@ function ModuleDetails() {
     getModuleFeedback()
   );
 
-  const [savingProgress, setSavingProgress] = useState(false);
-  const [progressError, setProgressError] = useState("");
+  const [savingProgress, setSavingProgress] =
+    useState(false);
+
+  const [progressError, setProgressError] =
+    useState("");
+
+  /*
+   * ============================================
+   * LANGUAGE SUPPORT
+   * ============================================
+   */
+
+  const selectedLanguage =
+    user?.language || "en";
+
+  const translatedModule =
+    module?.languageVariants?.[
+      selectedLanguage
+    ] ||
+    module?.languageVariants?.en ||
+    module;
+
+  /*
+   * ============================================
+   * MODULE ACCESS
+   * ============================================
+   */
 
   const unlocked = module
     ? isModuleUnlocked(
@@ -139,7 +169,9 @@ function ModuleDetails() {
               ADVENTURE LOCKED
             </span>
 
-            <h1>{module.title}</h1>
+            <h1>
+              {translatedModule.title}
+            </h1>
 
             <p>
               Complete the previous adventure to unlock
@@ -171,34 +203,28 @@ function ModuleDetails() {
 
     setProgressError("");
 
-    /*
-      First update the existing local progress system.
-      This keeps the current UI and module unlocking behavior working.
-    */
-    const updated = markModuleComplete(module.id);
+    const updated = markModuleComplete(
+      module.id
+    );
+
     setCompleted(updated);
 
-    /*
-      If the learner is logged in, also persist the completion
-      and award XP through the backend.
-    */
     if (isAuthenticated && token) {
       try {
         setSavingProgress(true);
 
         await awardUserPoints(token, {
           points: 100,
+
           completedModule: {
             moduleId: module.id,
-            title: module.title,
+            title:
+              translatedModule.title ||
+              module.title,
             score: 100,
           },
         });
 
-        /*
-          Refresh the authenticated user so AuthContext immediately
-          contains the latest points, level and completed modules.
-        */
         await refreshProfile();
       } catch (error) {
         console.error(
@@ -287,9 +313,13 @@ function ModuleDetails() {
             ADVENTURE {moduleIndex + 1}
           </span>
 
-          <h1>{module.title}</h1>
+          <h1>
+            {translatedModule.title}
+          </h1>
 
-          <p>{module.topic}</p>
+          <p>
+            {translatedModule.topic}
+          </p>
 
           {isCompleted && (
             <div className="details-completed-pill">
@@ -312,27 +342,34 @@ function ModuleDetails() {
 
             <div>
               <span>LET'S LEARN</span>
-              <h2>Discover Your Rights</h2>
+              <h2>
+                Discover Your Rights
+              </h2>
             </div>
           </div>
 
           <div className="lesson-blocks">
-            {module.content.map((block, index) => (
-              <div
-                key={index}
-                className="lesson-block"
-                style={{
-                  "--block-color":
-                    colors[index % colors.length],
-                }}
-              >
-                <div className="lesson-number">
-                  {index + 1}
-                </div>
+            {translatedModule.content.map(
+              (block, index) => (
+                <div
+                  key={index}
+                  className="lesson-block"
+                  style={{
+                    "--block-color":
+                      colors[
+                        index %
+                          colors.length
+                      ],
+                  }}
+                >
+                  <div className="lesson-number">
+                    {index + 1}
+                  </div>
 
-                <p>{block}</p>
-              </div>
-            ))}
+                  <p>{block}</p>
+                </div>
+              )
+            )}
           </div>
 
           {/* ================================
@@ -363,10 +400,12 @@ function ModuleDetails() {
                   onClick={() => navigate("/")}
                 >
                   Continue Adventure
+
                   <ArrowLeft
                     size={17}
                     style={{
-                      transform: "rotate(180deg)",
+                      transform:
+                        "rotate(180deg)",
                     }}
                   />
                 </button>
@@ -398,30 +437,23 @@ function ModuleDetails() {
                     ? "Saving Progress..."
                     : "⭐ Mark as Complete"}
                 </button>
+
+                {progressError && (
+                  <p
+                    style={{
+                      width: "100%",
+                      marginTop: "10px",
+                      color: "#be123c",
+                      fontSize: "13px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {progressError}
+                  </p>
+                )}
               </div>
             )}
           </div>
-
-          {/* ================================
-              BACKEND PROGRESS MESSAGE
-          ================================= */}
-
-          {progressError && (
-            <div
-              style={{
-                marginTop: "14px",
-                padding: "12px 14px",
-                borderRadius: "10px",
-                background: "#fff1f2",
-                border: "1px solid #fecdd3",
-                color: "#be123c",
-                fontSize: "13px",
-                fontWeight: 600,
-              }}
-            >
-              {progressError}
-            </div>
-          )}
 
           {/* ================================
               FEEDBACK
@@ -440,30 +472,42 @@ function ModuleDetails() {
             </div>
 
             <div className="feedback-options">
-              {FEEDBACK_OPTIONS.map((option) => {
-                const isSelected =
-                  selectedFeedback === option.emoji;
+              {FEEDBACK_OPTIONS.map(
+                (option) => {
+                  const isSelected =
+                    selectedFeedback ===
+                    option.emoji;
 
-                return (
-                  <button
-                    type="button"
-                    key={option.emoji}
-                    className={`feedback-option ${
-                      isSelected
-                        ? "feedback-option-selected"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      handleFeedback(option.emoji)
-                    }
-                    title={option.label}
-                    aria-label={option.label}
-                  >
-                    <span>{option.emoji}</span>
-                    <small>{option.label}</small>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      type="button"
+                      key={option.emoji}
+                      className={`feedback-option ${
+                        isSelected
+                          ? "feedback-option-selected"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        handleFeedback(
+                          option.emoji
+                        )
+                      }
+                      title={option.label}
+                      aria-label={
+                        option.label
+                      }
+                    >
+                      <span>
+                        {option.emoji}
+                      </span>
+
+                      <small>
+                        {option.label}
+                      </small>
+                    </button>
+                  );
+                }
+              )}
             </div>
 
             {selectedFeedback && (
@@ -480,8 +524,10 @@ function ModuleDetails() {
 
         <div className="details-footer-message">
           <Sparkles size={16} />
+
           Every right you learn makes you a stronger
           Explorer!
+
           <Sparkles size={16} />
         </div>
       </div>

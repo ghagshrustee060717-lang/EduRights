@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   ArrowLeft,
   Trophy,
@@ -26,11 +27,18 @@ import { useAuth } from "../context/AuthContext";
 function Profile() {
   const navigate = useNavigate();
 
-  const { user, loading: authLoading } = useAuth();
+  const {
+    user,
+    loading: authLoading,
+    saveProfile,
+  } = useAuth();
 
   const [completed, setCompleted] = useState([]);
   const [feedback, setFeedback] = useState({});
   const [profileLoading, setProfileLoading] = useState(true);
+
+  const [languageSaving, setLanguageSaving] = useState(false);
+  const [languageMessage, setLanguageMessage] = useState("");
 
   /*
    * ============================================
@@ -51,12 +59,8 @@ function Profile() {
     }
 
     if (user) {
-      const backendCompleted = Array.isArray(
-        user.completedModules
-      )
-        ? user.completedModules.map(
-            (module) => module.moduleId
-          )
+      const backendCompleted = Array.isArray(user.completedModules)
+        ? user.completedModules.map((module) => module.moduleId)
         : [];
 
       setCompleted(backendCompleted);
@@ -80,6 +84,30 @@ function Profile() {
 
   /*
    * ============================================
+   * LANGUAGE
+   * ============================================
+   */
+
+  const handleLanguageChange = async (event) => {
+    const language = event.target.value;
+
+    try {
+      setLanguageSaving(true);
+      setLanguageMessage("");
+
+      await saveProfile({ language });
+
+      setLanguageMessage("Language updated successfully! 🌐");
+    } catch (error) {
+      console.error("Failed to update language:", error);
+      setLanguageMessage("Couldn't update language. Please try again.");
+    } finally {
+      setLanguageSaving(false);
+    }
+  };
+
+  /*
+   * ============================================
    * XP / LEVEL
    * ============================================
    */
@@ -91,6 +119,7 @@ function Profile() {
    * For logged-in users, use the backend's
    * totalPoints and level information.
    */
+
   const xp = user
     ? Number(user.totalPoints || 0)
     : localXP;
@@ -98,29 +127,33 @@ function Profile() {
   const levelInfo = user
     ? {
         level: Number(user.currentLevel || 1),
+
         title:
           user.levelTitle ||
           "Level 1 Beginner",
+
         currentXP: Number(user.totalPoints || 0),
+
         progressPercent:
           Number(user.nextLevelPoints || 500) > 0
             ? Math.min(
                 100,
                 Math.round(
                   (Number(user.totalPoints || 0) /
-                    Number(
-                      user.nextLevelPoints || 500
-                    )) *
+                    Number(user.nextLevelPoints || 500)) *
                     100
                 )
               )
             : 0,
+
         nextLevelXP: Number(
           user.nextLevelPoints || 500
         ),
+
         nextLevelTitle: `Level ${
           Number(user.currentLevel || 1) + 1
         }`,
+
         isMaxLevel: false,
       }
     : localLevelInfo;
@@ -141,6 +174,7 @@ function Profile() {
    * If backend badges exist, use them.
    * Otherwise keep the existing local badge logic.
    */
+
   const badges =
     user &&
     Array.isArray(user.badgesEarned) &&
@@ -417,6 +451,106 @@ function Profile() {
         </section>
 
         {/* ================================
+            LANGUAGE
+        ================================= */}
+
+        {user && (
+          <section
+            className="profile-card"
+            style={{
+              marginTop: "24px",
+            }}
+          >
+            <div className="profile-card-heading">
+              <div className="profile-card-title">
+                <div className="profile-card-title-icon blue">
+                  🌐
+                </div>
+
+                <div>
+                  <span>LEARNING PREFERENCE</span>
+                  <h2>Language</h2>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "16px",
+                flexWrap: "wrap",
+              }}
+            >
+              <select
+                value={user?.language || "en"}
+                onChange={handleLanguageChange}
+                disabled={languageSaving}
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  background: "#ffffff",
+                  color: "#1e293b",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor: languageSaving
+                    ? "wait"
+                    : "pointer",
+                  minWidth: "220px",
+                  outline: "none",
+                }}
+              >
+                <option value="en">
+                  🇬🇧 English
+                </option>
+
+                <option value="hi">
+                  🇮🇳 हिंदी
+                </option>
+
+                <option value="es">
+                  🇪🇸 Español
+                </option>
+
+                <option value="fr">
+                  🇫🇷 Français
+                </option>
+              </select>
+
+              {languageSaving && (
+                <span
+                  style={{
+                    color: "#64748b",
+                    fontSize: "14px",
+                  }}
+                >
+                  Saving...
+                </span>
+              )}
+
+              {!languageSaving &&
+                languageMessage && (
+                  <span
+                    style={{
+                      color:
+                        languageMessage.includes(
+                          "successfully"
+                        )
+                          ? "#059669"
+                          : "#dc2626",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {languageMessage}
+                  </span>
+                )}
+            </div>
+          </section>
+        )}
+
+        {/* ================================
             BADGES
         ================================= */}
 
@@ -484,6 +618,7 @@ function Profile() {
               </div>
             ))}
           </div>
+
         </section>
 
         {/* ================================
@@ -577,6 +712,7 @@ function Profile() {
               }
             )}
           </div>
+
         </section>
 
         {/* ================================
@@ -599,9 +735,10 @@ function Profile() {
   );
 }
 
-
-/* Small icon component so we don't
-   need another package/import. */
+/*
+ * Small icon component so we don't
+ * need another package/import.
+ */
 
 function BookProgressIcon() {
   return (

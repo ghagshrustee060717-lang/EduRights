@@ -37,11 +37,12 @@ function LearningModules() {
       try {
        const data = await getModules();
 
-        const backendModules = (data.modules || []).map((module) => ({
+       const backendModules = (data.modules || []).map((module) => ({
           id: module.moduleId,
           title: module.title,
           topic: module.topic,
           content: module.content || [],
+          languageVariants: module.languageVariants || {},
         }));
 
         if (backendModules.length > 0) {

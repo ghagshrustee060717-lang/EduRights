@@ -3,27 +3,92 @@ export const modules = [
     id: "m1",
     title: "What Are Rights?",
     topic: "Basics",
+
     content: [
       "Rights are things every child is entitled to, no matter who they are or where they live.",
       "Some examples: the right to education, the right to be safe, and the right to be heard."
-    ]
+    ],
+
+    languageVariants: {
+      en: {
+        title: "What Are Rights?",
+        topic: "Basics",
+        content: [
+          "Rights are things every child is entitled to, no matter who they are or where they live.",
+          "Some examples: the right to education, the right to be safe, and the right to be heard."
+        ]
+      },
+
+      hi: {
+        title: "अधिकार क्या हैं?",
+        topic: "मूल बातें",
+        content: [
+          "अधिकार वे चीज़ें हैं जिनका हक हर बच्चे को है, चाहे वह कोई भी हो या कहीं भी रहता हो।",
+          "कुछ उदाहरण हैं: शिक्षा का अधिकार, सुरक्षित रहने का अधिकार और अपनी बात रखने का अधिकार।"
+        ]
+      }
+    }
   },
+
   {
     id: "m2",
     title: "The Right to Education",
     topic: "Education",
+
     content: [
       "Every child has the right to go to school and learn.",
       "This means schools should be safe, free from discrimination, and accessible to everyone."
-    ]
+    ],
+
+    languageVariants: {
+      en: {
+        title: "The Right to Education",
+        topic: "Education",
+        content: [
+          "Every child has the right to go to school and learn.",
+          "This means schools should be safe, free from discrimination, and accessible to everyone."
+        ]
+      },
+
+      hi: {
+        title: "शिक्षा का अधिकार",
+        topic: "शिक्षा",
+        content: [
+          "हर बच्चे को स्कूल जाने और सीखने का अधिकार है।",
+          "इसका मतलब है कि स्कूल सुरक्षित होने चाहिए, भेदभाव से मुक्त होने चाहिए और सभी के लिए सुलभ होने चाहिए।"
+        ]
+      }
+    }
   },
+
   {
     id: "m3",
     title: "The Right to Be Heard",
     topic: "Participation",
+
     content: [
       "Children have the right to share their opinions on things that affect them.",
       "Adults should listen and take children's views seriously, even if they don't always agree."
-    ]
+    ],
+
+    languageVariants: {
+      en: {
+        title: "The Right to Be Heard",
+        topic: "Participation",
+        content: [
+          "Children have the right to share their opinions on things that affect them.",
+          "Adults should listen and take children's views seriously, even if they don't always agree."
+        ]
+      },
+
+      hi: {
+        title: "अपनी बात रखने का अधिकार",
+        topic: "भागीदारी",
+        content: [
+          "बच्चों को उन चीज़ों के बारे में अपनी राय बताने का अधिकार है जो उन्हें प्रभावित करती हैं।",
+          "बड़ों को बच्चों की बात सुननी चाहिए और उनकी राय को गंभीरता से लेना चाहिए, भले ही वे हमेशा सहमत न हों।"
+        ]
+      }
+    }
   }
 ];
