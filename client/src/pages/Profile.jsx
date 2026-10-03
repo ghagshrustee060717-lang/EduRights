@@ -21,36 +21,239 @@ import {
   getBadges,
 } from "../utils/progress";
 
+import { useAuth } from "../context/AuthContext";
+
 function Profile() {
   const navigate = useNavigate();
 
+  const { user, loading: authLoading } = useAuth();
+
   const [completed, setCompleted] = useState([]);
   const [feedback, setFeedback] = useState({});
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  /*
+   * ============================================
+   * LOAD PROGRESS
+   * ============================================
+   *
+   * Logged-in users:
+   * Use progress stored in MongoDB through
+   * AuthContext.
+   *
+   * Logged-out users:
+   * Keep the existing localStorage behavior.
+   */
 
   useEffect(() => {
-    setCompleted(getCompletedModules());
-    setFeedback(getModuleFeedback());
-  }, []);
+    if (authLoading) {
+      return;
+    }
 
-  const xp = getXP(completed);
-  const levelInfo = getLevelInfo(xp);
+    if (user) {
+      const backendCompleted = Array.isArray(
+        user.completedModules
+      )
+        ? user.completedModules.map(
+            (module) => module.moduleId
+          )
+        : [];
 
-  const badges = getBadges(
+      setCompleted(backendCompleted);
+
+      /*
+       * Feedback is still stored locally for now.
+       */
+      setFeedback(getModuleFeedback());
+
+      setProfileLoading(false);
+    } else {
+      /*
+       * Fallback for logged-out users.
+       */
+      setCompleted(getCompletedModules());
+      setFeedback(getModuleFeedback());
+
+      setProfileLoading(false);
+    }
+  }, [user, authLoading]);
+
+  /*
+   * ============================================
+   * XP / LEVEL
+   * ============================================
+   */
+
+  const localXP = getXP(completed);
+  const localLevelInfo = getLevelInfo(localXP);
+
+  /*
+   * For logged-in users, use the backend's
+   * totalPoints and level information.
+   */
+  const xp = user
+    ? Number(user.totalPoints || 0)
+    : localXP;
+
+  const levelInfo = user
+    ? {
+        level: Number(user.currentLevel || 1),
+        title:
+          user.levelTitle ||
+          "Level 1 Beginner",
+        currentXP: Number(user.totalPoints || 0),
+        progressPercent:
+          Number(user.nextLevelPoints || 500) > 0
+            ? Math.min(
+                100,
+                Math.round(
+                  (Number(user.totalPoints || 0) /
+                    Number(
+                      user.nextLevelPoints || 500
+                    )) *
+                    100
+                )
+              )
+            : 0,
+        nextLevelXP: Number(
+          user.nextLevelPoints || 500
+        ),
+        nextLevelTitle: `Level ${
+          Number(user.currentLevel || 1) + 1
+        }`,
+        isMaxLevel: false,
+      }
+    : localLevelInfo;
+
+  /*
+   * ============================================
+   * BADGES
+   * ============================================
+   */
+
+  const localBadges = getBadges(
     completed,
     feedback,
     modules
   );
 
+  /*
+   * If backend badges exist, use them.
+   * Otherwise keep the existing local badge logic.
+   */
+  const badges =
+    user &&
+    Array.isArray(user.badgesEarned) &&
+    user.badgesEarned.length > 0
+      ? modules.map((module, index) => {
+          const backendBadge =
+            user.badgesEarned.find(
+              (badge) =>
+                badge.badgeId === module.id
+            );
+
+          const localBadge =
+            localBadges[index] || {};
+
+          return {
+            id:
+              backendBadge?.badgeId ||
+              localBadge.id ||
+              module.id,
+
+            label:
+              backendBadge?.name ||
+              localBadge.label ||
+              `Explorer Badge ${index + 1}`,
+
+            description:
+              backendBadge?.description ||
+              localBadge.description ||
+              "Keep exploring to unlock this badge.",
+
+            icon:
+              backendBadge?.icon ||
+              localBadge.icon ||
+              "🏆",
+
+            unlocked: Boolean(
+              backendBadge
+            ),
+          };
+        })
+      : localBadges;
+
   const unlockedCount = badges.filter(
     (badge) => badge.unlocked
   ).length;
 
+  /*
+   * ============================================
+   * COMPLETION %
+   * ============================================
+   */
+
   const completionPercent =
     modules.length > 0
       ? Math.round(
-          (completed.length / modules.length) * 100
+          (completed.length / modules.length) *
+            100
         )
       : 0;
+
+  /*
+   * ============================================
+   * LOADING STATE
+   * ============================================
+   */
+
+  if (authLoading || profileLoading) {
+    return (
+      <main className="profile-page">
+        <div className="profile-bg profile-bg-one" />
+        <div className="profile-bg profile-bg-two" />
+
+        <div
+          className="profile-container"
+          style={{
+            minHeight: "70vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              color: "#64748b",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "40px",
+                marginBottom: "10px",
+              }}
+            >
+              ⏳
+            </div>
+
+            <h2
+              style={{
+                color: "#1e293b",
+                marginBottom: "5px",
+              }}
+            >
+              Loading your progress...
+            </h2>
+
+            <p>
+              Fetching your adventure data.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="profile-page">
@@ -81,18 +284,34 @@ function Profile() {
           <div className="profile-hero-circle-two" />
 
           <div className="profile-avatar">
-            🧭
+            {user?.avatar ===
+            "superhero-aarav"
+              ? "🦸‍♂️"
+              : user?.avatar ===
+                "explorer-maya"
+              ? "🧭"
+              : user?.avatar ===
+                "tech-leo"
+              ? "🚀"
+              : user?.avatar ===
+                "scout-tara"
+              ? "⭐"
+              : "🧭"}
           </div>
 
           <span className="profile-level">
             LEVEL {levelInfo.level}
           </span>
 
-          <h1>{levelInfo.title}</h1>
+          <h1>
+            {user?.name
+              ? `${user.name}'s Adventure`
+              : levelInfo.title}
+          </h1>
 
           <div className="profile-xp">
             <Zap size={18} />
-            {levelInfo.currentXP} XP
+            {xp} XP
           </div>
 
           <div className="profile-xp-progress">
@@ -112,8 +331,11 @@ function Profile() {
                 </span>
               ) : (
                 <span>
-                  {levelInfo.nextLevelXP -
-                    levelInfo.currentXP}{" "}
+                  {Math.max(
+                    0,
+                    levelInfo.nextLevelXP -
+                      levelInfo.currentXP
+                  )}{" "}
                   XP to reach{" "}
                   <strong>
                     {levelInfo.nextLevelTitle}
@@ -141,8 +363,10 @@ function Profile() {
 
             <div>
               <span>Adventures</span>
+
               <strong>
-                {completed.length}/{modules.length}
+                {completed.length}/
+                {modules.length}
               </strong>
             </div>
           </div>
@@ -154,7 +378,10 @@ function Profile() {
 
             <div>
               <span>Total XP</span>
-              <strong>{xp} XP</strong>
+
+              <strong>
+                {xp} XP
+              </strong>
             </div>
           </div>
 
@@ -165,8 +392,10 @@ function Profile() {
 
             <div>
               <span>Badges</span>
+
               <strong>
-                {unlockedCount}/{badges.length}
+                {unlockedCount}/
+                {badges.length}
               </strong>
             </div>
           </div>
@@ -178,6 +407,7 @@ function Profile() {
 
             <div>
               <span>Progress</span>
+
               <strong>
                 {completionPercent}%
               </strong>
@@ -199,13 +429,17 @@ function Profile() {
               </div>
 
               <div>
-                <span>YOUR COLLECTION</span>
+                <span>
+                  YOUR COLLECTION
+                </span>
+
                 <h2>Badges</h2>
               </div>
             </div>
 
             <div className="profile-badge-count">
-              {unlockedCount} / {badges.length}
+              {unlockedCount} /{" "}
+              {badges.length}
             </div>
           </div>
 
@@ -229,11 +463,15 @@ function Profile() {
 
                 <h3>{badge.label}</h3>
 
-                <p>{badge.description}</p>
+                <p>
+                  {badge.description}
+                </p>
 
                 {badge.unlocked && (
                   <div className="badge-earned">
-                    <CheckCircle2 size={13} />
+                    <CheckCircle2
+                      size={13}
+                    />
                     Earned
                   </div>
                 )}
@@ -261,8 +499,13 @@ function Profile() {
               </div>
 
               <div>
-                <span>YOUR JOURNEY</span>
-                <h2>Adventure Progress</h2>
+                <span>
+                  YOUR JOURNEY
+                </span>
+
+                <h2>
+                  Adventure Progress
+                </h2>
               </div>
             </div>
 
@@ -272,56 +515,67 @@ function Profile() {
           </div>
 
           <div className="profile-module-list">
-            {modules.map((module, index) => {
-              const isComplete =
-                completed.includes(module.id);
+            {modules.map(
+              (module, index) => {
+                const isComplete =
+                  completed.includes(
+                    module.id
+                  );
 
-              const isUnlocked =
-                index === 0 ||
-                completed.includes(
-                  modules[index - 1].id
-                );
+                const isUnlocked =
+                  index === 0 ||
+                  completed.includes(
+                    modules[index - 1].id
+                  );
 
-              return (
-                <div
-                  key={module.id}
-                  className={`profile-module ${
-                    isComplete
-                      ? "profile-module-complete"
-                      : ""
-                  }`}
-                >
-                  <div className="profile-module-number">
-                    {isComplete ? (
-                      <CheckCircle2 size={20} />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-
-                  <div className="profile-module-info">
-                    <h3>{module.title}</h3>
-                    <p>{module.topic}</p>
-                  </div>
-
+                return (
                   <div
-                    className={`profile-module-status ${
+                    key={module.id}
+                    className={`profile-module ${
                       isComplete
-                        ? "complete"
-                        : isUnlocked
-                        ? "available"
-                        : "locked"
+                        ? "profile-module-complete"
+                        : ""
                     }`}
                   >
-                    {isComplete
-                      ? "Completed"
-                      : isUnlocked
-                      ? "Available"
-                      : "Locked"}
+                    <div className="profile-module-number">
+                      {isComplete ? (
+                        <CheckCircle2
+                          size={20}
+                        />
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+
+                    <div className="profile-module-info">
+                      <h3>
+                        {module.title}
+                      </h3>
+
+                      <p>
+                        {module.topic}
+                      </p>
+                    </div>
+
+                    <div
+                      className={`profile-module-status ${
+                        isComplete
+                          ? "complete"
+                          : isUnlocked
+                          ? "available"
+                          : "locked"
+                      }`}
+                    >
+                      {isComplete
+                        ? "Completed"
+                        : isUnlocked
+                        ? "Available"
+                        : "Locked"}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </div>
         </section>
 
@@ -333,8 +587,8 @@ function Profile() {
           <Sparkles size={18} />
 
           <span>
-            Keep exploring to earn more XP and unlock
-            every badge! 🌟
+            Keep exploring to earn more XP
+            and unlock every badge! 🌟
           </span>
 
           <Sparkles size={18} />
@@ -348,6 +602,7 @@ function Profile() {
 
 /* Small icon component so we don't
    need another package/import. */
+
 function BookProgressIcon() {
   return (
     <svg
