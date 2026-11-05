@@ -7,6 +7,10 @@ import {
   getMemoryUserById,
   addMemoryUser,
 } from '../config/memoryStore.js';
+import {
+  calculateLevel,
+  getXPFromCompletedModules,
+} from '../utils/progress.js';
 
 // Generate JWT token
 export const generateToken = (id) => {
@@ -74,9 +78,9 @@ export const registerUser = async (req, res) => {
           avatar: avatar || 'superhero-aarav',
           role: role || 'child',
           currentLevel: 1,
-          levelTitle: 'Level 1 Beginner',
+          levelTitle: 'Rookie Explorer',
           totalPoints: 0,
-          nextLevelPoints: 500,
+          nextLevelPoints: 200,
           streakDays: 1,
           badgesEarned: [],
           completedModules: [],
@@ -191,13 +195,19 @@ export const loginUser = async (req, res) => {
 
     const token = generateToken(user._id || user.id);
 
-    let effectiveTotalPoints = user.totalPoints ?? 0;
-    if (user.email !== 'aarav@edurights.org' && user.completedModules?.length > 0) {
-      effectiveTotalPoints = user.completedModules.reduce((s, m) => s + (Number(m.score) || 0), 0);
-      if (user.totalPoints !== effectiveTotalPoints) {
-        user.totalPoints = effectiveTotalPoints;
-        if (typeof user.save === 'function') user.save().catch(() => {});
-      }
+    const effectiveTotalPoints = getXPFromCompletedModules(user.completedModules);
+    const levelInfo = calculateLevel(effectiveTotalPoints);
+    if (
+      user.totalPoints !== effectiveTotalPoints ||
+      user.currentLevel !== levelInfo.level ||
+      user.levelTitle !== levelInfo.title ||
+      user.nextLevelPoints !== levelInfo.nextLevelPoints
+    ) {
+      user.totalPoints = effectiveTotalPoints;
+      user.currentLevel = levelInfo.level;
+      user.levelTitle = levelInfo.title;
+      user.nextLevelPoints = levelInfo.nextLevelPoints;
+      if (typeof user.save === 'function') await user.save();
     }
 
     return res.json({
@@ -212,10 +222,10 @@ export const loginUser = async (req, res) => {
         language: user.language,
         avatar: user.avatar,
         role: user.role,
-        currentLevel: user.currentLevel || 1,
-        levelTitle: user.levelTitle || 'Level 1 Beginner',
+        currentLevel: levelInfo.level,
+        levelTitle: levelInfo.title,
         totalPoints: effectiveTotalPoints,
-        nextLevelPoints: user.nextLevelPoints ?? 500,
+        nextLevelPoints: levelInfo.nextLevelPoints,
         streakDays: user.streakDays || 1,
         badgesEarned: user.badgesEarned || [],
         completedModules: user.completedModules || [],
@@ -238,13 +248,19 @@ export const getMe = async (req, res) => {
   try {
     const user = req.user;
 
-    let effectiveTotalPoints = user.totalPoints ?? 0;
-    if (user.email !== 'aarav@edurights.org' && user.completedModules?.length > 0) {
-      effectiveTotalPoints = user.completedModules.reduce((s, m) => s + (Number(m.score) || 0), 0);
-      if (user.totalPoints !== effectiveTotalPoints) {
-        user.totalPoints = effectiveTotalPoints;
-        if (typeof user.save === 'function') user.save().catch(() => {});
-      }
+    const effectiveTotalPoints = getXPFromCompletedModules(user.completedModules);
+    const levelInfo = calculateLevel(effectiveTotalPoints);
+    if (
+      user.totalPoints !== effectiveTotalPoints ||
+      user.currentLevel !== levelInfo.level ||
+      user.levelTitle !== levelInfo.title ||
+      user.nextLevelPoints !== levelInfo.nextLevelPoints
+    ) {
+      user.totalPoints = effectiveTotalPoints;
+      user.currentLevel = levelInfo.level;
+      user.levelTitle = levelInfo.title;
+      user.nextLevelPoints = levelInfo.nextLevelPoints;
+      if (typeof user.save === 'function') await user.save();
     }
 
     return res.json({
@@ -257,10 +273,10 @@ export const getMe = async (req, res) => {
         language: user.language,
         avatar: user.avatar,
         role: user.role,
-        currentLevel: user.currentLevel,
-        levelTitle: user.levelTitle,
+        currentLevel: levelInfo.level,
+        levelTitle: levelInfo.title,
         totalPoints: effectiveTotalPoints,
-        nextLevelPoints: user.nextLevelPoints,
+        nextLevelPoints: levelInfo.nextLevelPoints,
         streakDays: user.streakDays,
         badgesEarned: user.badgesEarned,
         completedModules: user.completedModules || [],

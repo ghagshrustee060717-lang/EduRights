@@ -1,130 +1,128 @@
-import React from 'react';
-import { Shield, Sparkles, User, LogOut, LayoutDashboard } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
-export const Navbar = ({ onOpenAuth, onNavigateDashboard }) => {
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  BookOpen,
+  Trophy,
+  Home,
+  Shield,
+  LogIn,
+  UserPlus,
+  LogOut,
+} from "lucide-react";
+
+import { useAuth } from "../context/AuthContext";
+import AuthModal from "./AuthModal";
+
+function Navbar({ onOpenAuth, onNavigateDashboard }) {
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
 
-  return (
-    <nav style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '1.25rem 3rem',
-      background: 'rgba(20, 16, 62, 0.95)',
-      backdropFilter: 'blur(12px)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-    }}>
-      {/* Brand Logo */}
-      <div 
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          cursor: 'pointer',
-        }}
-      >
-        <div style={{
-          width: '42px',
-          height: '42px',
-          borderRadius: '12px',
-          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#ffffff',
-          boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
-        }}>
-          <Shield size={24} fill="#fbbf24" stroke="#ffffff" strokeWidth={1.5} />
-        </div>
-        <span style={{
-          fontSize: '1.5rem',
-          fontWeight: '800',
-          color: '#ffffff',
-          letterSpacing: '-0.02em',
-        }}>
-          Edu<span style={{ color: '#fbbf24' }}>Rights</span>
-        </span>
-      </div>
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
 
-
-      {/* Auth Action Buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {isAuthenticated ? (
-          <>
-            <button
-              onClick={onNavigateDashboard}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                color: '#ffffff',
-                fontWeight: '700',
-                padding: '0.65rem 1.4rem',
-                borderRadius: '9999px',
-                fontSize: '0.95rem',
-                boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)',
-              }}
-            >
-              <LayoutDashboard size={18} />
-              Open Dashboard ({user?.name || 'Aarav'})
-            </button>
-            <button
-              onClick={logout}
-              title="Sign Out"
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: '#f87171',
-                padding: '0.65rem',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <LogOut size={18} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => onOpenAuth('login')}
-              style={{
-                background: 'transparent',
-                color: '#ffffff',
-                fontWeight: '600',
-                padding: '0.65rem 1.25rem',
-                borderRadius: '9999px',
-                fontSize: '0.95rem',
-              }}
-            >
-              Log In
-            </button>
-            <button
-              onClick={() => onOpenAuth('register')}
-              style={{
-                background: '#fbbf24',
-                color: '#1e1b4b',
-                fontWeight: '800',
-                padding: '0.65rem 1.5rem',
-                borderRadius: '9999px',
-                fontSize: '0.95rem',
-                boxShadow: '0 4px 16px rgba(251, 191, 36, 0.35)',
-              }}
-              onMouseOver={(e) => (e.target.style.background = '#f59e0b')}
-              onMouseOut={(e) => (e.target.style.background = '#fbbf24')}
-            >
-              Get Started
-            </button>
-          </>
-        )}
-      </div>
-    </nav>
-  );
+ const openLogin = () => {
+  if (onOpenAuth) {
+    onOpenAuth("login");
+    return;
+  }
+  setAuthMode("login");
+  setAuthModalOpen(true);
 };
+
+const openRegister = () => {
+  if (onOpenAuth) {
+    onOpenAuth("register");
+    return;
+  }
+  setAuthMode("register");
+  setAuthModalOpen(true);
+};
+
+ const links = [
+  { to: "/", label: "Learning", icon: Home },
+  { to: "/quiz", label: "Take Quiz", icon: Trophy },
+  { to: "/knowledge-hub", label: "Knowledge Hub", icon: BookOpen },
+  { to: "/progress", label: "My Progress", icon: Trophy },
+];
+  return (
+    <>
+      <nav className="navbar">
+        <div className="navbar-inner">
+          <Link to="/" className="navbar-logo">
+            <div className="navbar-logo-icon">
+              <Shield size={22} strokeWidth={2.5} />
+            </div>
+            <span className="navbar-brand">
+              <span>Edu</span>
+              <strong>Rights</strong>
+            </span>
+          </Link>
+
+          {isAuthenticated && (
+            <div className="navbar-links">
+              {links.map((link) => {
+                const Icon = link.icon;
+                const active =
+                  link.to === "/"
+                    ? location.pathname === "/"
+                    : location.pathname.startsWith(link.to);
+
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`navbar-link ${
+                      active ? "navbar-link-active" : ""
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={2.2} />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="navbar-auth-actions">
+            {!isAuthenticated ? (
+              <>
+                <button
+                  type="button"
+                  className="navbar-auth-button navbar-auth-login"
+                  onClick={openLogin}
+                >
+                  <LogIn size={16} /> Log In
+                </button>
+                <button
+                  type="button"
+                  className="navbar-auth-button navbar-auth-start"
+                  onClick={openRegister}
+                >
+                  <UserPlus size={16} /> Get Started
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/progress">
+                  {user?.name || "Explorer"}
+                </Link>
+                <button type="button" onClick={logout} title="Log out">
+                  <LogOut size={17} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        initialMode={authMode}
+        onClose={() => setAuthModalOpen(false)}
+      />
+    </>
+  );
+}
+
 export default Navbar;

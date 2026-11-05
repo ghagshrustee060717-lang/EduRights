@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getLevelInfo } from '../utils/progress';
+import { modules as adventures } from '../data/modules';
 import {
   Trophy,
   Zap,
@@ -20,56 +22,27 @@ export const ProgressSection = ({ onStartQuiz }) => {
   const [filter, setFilter] = useState('all'); // 'all' | 'quizzes' | 'badges'
 
   const completedModules = user?.completedModules || [];
-  const moduleScoreTotal = completedModules.reduce((sum, m) => sum + (Number(m.score) || 0), 0);
-  const totalPoints = (user?.role === 'child' && completedModules.length > 0 && user?.email !== 'aarav@edurights.org')
-    ? moduleScoreTotal
-    : (user?.totalPoints ?? 0);
-  const currentLevel = user?.currentLevel ?? 1;
-  const levelTitle = user?.levelTitle || 'Level 1 Beginner';
-  const nextLevelPoints = user?.nextLevelPoints || 500;
+  const totalPoints = user?.totalPoints ?? 0;
+  const levelInfo = getLevelInfo(totalPoints);
+  const currentLevel = levelInfo.level;
+  const levelTitle = levelInfo.title;
+  const nextLevelPoints = levelInfo.nextLevelXP ?? 500;
   const badgesEarned = user?.badgesEarned || [];
   const streakDays = user?.streakDays || 1;
 
   // Level roadmap
   const levels = [
-    { level: 1, title: 'Beginner', minXp: 0, maxXp: 500 },
-    { level: 2, title: 'Learner', minXp: 500, maxXp: 1000 },
-    { level: 3, title: 'Explorer', minXp: 1000, maxXp: 1500 },
-    { level: 4, title: 'Achiever', minXp: 1500, maxXp: 2000 },
-    { level: 5, title: 'Champion', minXp: 2000, maxXp: 2000 },
+    { level: 1, title: 'Rookie Explorer', minXp: 0, maxXp: 200 },
+    { level: 2, title: 'Rights Defender', minXp: 200, maxXp: 500 },
+    { level: 3, title: 'Legal Champion', minXp: 500, maxXp: 500 },
   ];
 
-  // Available modules
-  const allModules = [
-    {
-      id: 'm1',
-      title: 'Right to Education',
-      chapter: 'RTE Act 2009',
-      totalXp: 100,
-      description: 'Free & compulsory education, non-discrimination & equal rights in schools.',
-    },
-    {
-      id: 'm2',
-      title: 'Right to Play',
-      chapter: 'UNCRC Article 31',
-      totalXp: 100,
-      description: 'Rest, leisure, and recreational activities for healthy childhood development.',
-    },
-    {
-      id: 'm3',
-      title: 'Right to Safety',
-      chapter: 'POCSO & Childline 1098',
-      totalXp: 60,
-      description: 'Protection from harm, child abuse safety rules, and emergency help lines.',
-    },
-    {
-      id: 'm4',
-      title: 'Right to Privacy',
-      chapter: 'Digital Rights',
-      totalXp: 40,
-      description: 'Online safety, personal space, and protecting private information.',
-    },
-  ];
+  const allModules = adventures.map((module) => ({
+    id: module.id,
+    title: module.title,
+    chapter: module.topic,
+    totalXp: 100,
+  }));
 
   // System badges master catalog
   const systemBadges = [
@@ -95,7 +68,7 @@ export const ProgressSection = ({ onStartQuiz }) => {
       badgeId: 'rising-star',
       name: 'Rising Star',
       icon: '🚀',
-      criteria: 'Reach Level 2 with 500+ XP',
+      criteria: 'Reach Level 3 with 500+ XP',
     },
     {
       badgeId: 'privacy-guardian',
@@ -124,15 +97,17 @@ export const ProgressSection = ({ onStartQuiz }) => {
   ];
 
   // Calculate XP progress percentage
-  const currentLevelInfo = levels.find((l) => l.level === currentLevel) || levels[0];
-  const levelMin = currentLevelInfo.minXp;
-  const levelMax = currentLevelInfo.maxXp;
-  const progressPercent =
-    levelMax > levelMin
-      ? Math.min(Math.max(Math.round(((totalPoints - levelMin) / (levelMax - levelMin)) * 100), 0), 100)
-      : 100;
+  const progressPercent = levelInfo.progressPercent;
 
-  const moduleCompletionPercent = Math.round((completedModules.length / allModules.length) * 100);
+  const completedModuleIds = new Set(
+    completedModules
+      .filter((module) => module.lessonCompleted !== false && module.quizCompleted === true)
+      .map((module) => module.moduleId)
+  );
+  const completedModuleCount = completedModuleIds.size;
+  const moduleCompletionPercent = allModules.length
+    ? Math.round((completedModuleCount / allModules.length) * 100)
+    : 0;
 
   return (
     <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
@@ -404,7 +379,7 @@ export const ProgressSection = ({ onStartQuiz }) => {
                 borderRadius: '9999px',
               }}
             >
-              {completedModules.length} of {allModules.length} completed ({moduleCompletionPercent}%)
+              {completedModuleCount} of {allModules.length} completed ({moduleCompletionPercent}%)
             </div>
           </div>
 
@@ -412,7 +387,9 @@ export const ProgressSection = ({ onStartQuiz }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', flex: 1 }}>
             {allModules.map((mod) => {
               const attempt = completedModules.find((c) => c.moduleId === mod.id);
-              const isCompleted = !!attempt;
+              const isCompleted = Boolean(
+                attempt && attempt.lessonCompleted !== false && attempt.quizCompleted === true
+              );
 
               return (
                 <div

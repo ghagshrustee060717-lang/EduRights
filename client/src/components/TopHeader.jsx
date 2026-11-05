@@ -112,7 +112,7 @@ export const TopHeader = ({ onOpenProfile }) => {
               {userName}
             </span>
             <span style={{ fontSize: '0.72rem', fontWeight: '700', color: '#6366f1' }}>
-              {user?.levelTitle || 'Level 3 Explorer'}
+              {user?.levelTitle || 'Rookie Explorer'}
             </span>
           </div>
         </div>

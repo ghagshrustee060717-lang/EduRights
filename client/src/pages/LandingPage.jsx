@@ -24,12 +24,12 @@ export const LandingPage = ({ onOpenAuth, onNavigateDashboard }) => {
       <HeroSection onStartAdventure={handleStart} onOpenAuth={onOpenAuth} />
 
       {/* Three Feature Highlights Banner */}
-      <section style={{
+      <section className="landing-features" style={{
         padding: '4rem 3rem',
         background: '#0e0b2d',
         borderTop: '1px solid rgba(255, 255, 255, 0.06)',
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="landing-features-inner" style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <span style={{
               color: '#fbbf24',
@@ -45,7 +45,7 @@ export const LandingPage = ({ onOpenAuth, onNavigateDashboard }) => {
             </h2>
           </div>
 
-          <div style={{
+          <div className="landing-features-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '2rem',

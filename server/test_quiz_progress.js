@@ -31,6 +31,21 @@ async function runQuizProgressTests() {
   console.log(`   Initial Level: ${regRes.user.currentLevel} (${regRes.user.levelTitle}), Total XP: ${regRes.user.totalPoints}`);
   const token = regRes.token;
 
+  const lessonRes = await fetch(`${BASE}/users/award-points`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      completedModule: { moduleId: 'm1', title: 'What Are Rights?' },
+    }),
+  }).then((r) => r.json());
+
+  if (!lessonRes.success || lessonRes.user.totalPoints !== 67) {
+    throw new Error('Lesson completion did not award its share of 200 XP.');
+  }
+
   // 3. Prepare answers for m1
   // Correct answers:
   // Q1: "6 to 14 years"

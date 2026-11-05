@@ -240,6 +240,10 @@ export const AuthProvider = ({ children }) => {
     refreshUser,
     updateUserGamification,
     celebrate,
+
+    // Compatibility with Learning Content profile page
+    refreshProfile: refreshUser,
+    saveProfile: updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

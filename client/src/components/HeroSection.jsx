@@ -1,12 +1,12 @@
 import React from 'react';
-import { Play, Sparkles, Award, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
+import { Play, Sparkles, Award, ShieldCheck, Heart, ArrowRight, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
   const { demoLogin, isAuthenticated } = useAuth();
 
   return (
-    <section style={{
+    <section className="landing-hero" style={{
       minHeight: 'calc(100vh - 80px)',
       background: 'radial-gradient(ellipse at 70% 40%, #2b1f7d 0%, #14103e 60%, #0c0827 100%)',
       position: 'relative',
@@ -31,7 +31,7 @@ export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
         pointerEvents: 'none',
       }} />
 
-      <div style={{
+      <div className="landing-hero-grid" style={{
         maxWidth: '1280px',
         margin: '0 auto',
         width: '100%',
@@ -65,7 +65,7 @@ export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
           </div>
 
           {/* Main Title */}
-          <h1 style={{
+          <h1 className="landing-hero-title" style={{
             fontSize: '3.6rem',
             fontWeight: '900',
             lineHeight: 1.1,
@@ -82,7 +82,7 @@ export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
           </h1>
 
           {/* Subtitle */}
-          <p style={{
+          <p className="landing-hero-description" style={{
             fontSize: '1.18rem',
             lineHeight: 1.6,
             color: '#cbd5e1',
@@ -93,7 +93,7 @@ export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
           </p>
 
           {/* Primary Action Buttons */}
-          <div style={{
+          <div className="landing-hero-actions" style={{
             display: 'flex',
             alignItems: 'center',
             gap: '1.25rem',
@@ -199,14 +199,14 @@ export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
         </div>
 
         {/* Right Column: Hero Mascot with Floating Badges */}
-        <div style={{
+        <div className="landing-hero-visual" style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           position: 'relative',
         }}>
           {/* Glowing Aura Ring */}
-          <div style={{
+          <div className="landing-hero-image" style={{
             position: 'absolute',
             width: '440px',
             height: '440px',
@@ -237,6 +237,17 @@ export const HeroSection = ({ onStartAdventure, onOpenAuth }) => {
                 display: 'block',
               }}
             />
+          </div>
+
+          <div className="landing-reading-card float-animation">
+            <img
+              src="/assets/images/child_reading.jpg"
+              alt="A young explorer reading a story"
+            />
+            <span>
+              <BookOpen size={15} />
+              Rights made simple
+            </span>
           </div>
 
           {/* Floating Badge 1: Learn */}

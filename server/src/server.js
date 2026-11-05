@@ -1,10 +1,16 @@
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
 import { connectDB } from './config/db.js';
+
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
+import moduleRoutes from './routes/moduleRoutes.js';
+import articleRoutes from './routes/articleRoutes.js';
+
 import { seedQuizzes } from './controllers/quizController.js';
 
 dotenv.config();
@@ -12,57 +18,63 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect Database (with automatic graceful fallback)
-connectDB().then(() => {
-  seedQuizzes();
-});
-
 // Middleware
-app.use(cors({
-  origin: '*',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-// Routes
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/quizzes', quizRoutes);
+app.use('/api/modules', moduleRoutes);
+app.use('/api/articles', articleRoutes);
 
-// Root & Health check
+// Health checks
+app.get('/', (req, res) => {
+  res.json({ message: 'EduRights API is running' });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     service: 'EduRights Backend API',
-    moduleOwner: 'Person A (Auth & User System)',
     timestamp: new Date().toISOString(),
   });
 });
 
-// Stubs for teammates (Person B - Modules, Person C - Quizzes) to prevent broken links
-app.get('/api/modules', (req, res) => {
-  res.json({
-    success: true,
-    modules: [
-      { id: 'm1', title: 'Right to Education', chapter: 'Chapter 2 of 5', xp: 50, status: 'in-progress' },
-      { id: 'm2', title: 'Right to Play', chapter: 'Chapter 1 of 3', xp: 50, status: 'available' },
-      { id: 'm3', title: 'Right to Safety', chapter: 'Chapter 1 of 4', xp: 60, status: 'available' },
-      { id: 'm4', title: 'Right to Privacy', chapter: 'Chapter 1 of 3', xp: 40, status: 'locked' },
-    ],
+// Handle unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found',
   });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Unhandled Server Error:', err);
+
   res.status(500).json({
     success: false,
     message: err.message || 'Internal Server Error',
   });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 EduRights Server running on port ${PORT}`);
-  console.log(`🔒 Person A (Auth & User System) Ready at http://localhost:${PORT}/api/auth`);
-});
+// Connect database and start server
+connectDB()
+  .then(() => {
+    seedQuizzes();
+
+    app.listen(PORT, () => {
+      console.log(`EduRights server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Server startup error:', error);
+  });

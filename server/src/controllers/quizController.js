@@ -4,45 +4,51 @@ import User from '../models/User.js';
 import Progress from '../models/Progress.js';
 import BadgeStatus from '../models/BadgeStatus.js';
 import { getMemoryUserById, getMemoryUserByEmail } from '../config/memoryStore.js';
+import {
+  calculateLevel,
+  getXPFromCompletedModules,
+} from '../utils/progress.js';
 
-const calculateLevel = (totalPoints) => {
-  if (totalPoints >= 2000) {
-    return {
-      level: 5,
-      title: 'Level 5 Champion',
-      nextLevelPoints: 2000,
-    };
+const supplementalQuizQuestions = {
+  m3: [
+    {
+      id: 'm3-heard-1',
+      questionText: 'When a school rule affects children, what should children be able to do?',
+      options: [
+        'Share their views and be listened to',
+        'Let adults decide without asking them',
+        'Keep their opinions secret',
+        'Stop attending school',
+      ],
+      correctAnswer: 'Share their views and be listened to',
+      points: 30,
+    },
+    {
+      id: 'm3-heard-2',
+      questionText: 'What should adults do after children share opinions about an issue affecting them?',
+      options: [
+        'Consider their views seriously',
+        'Ignore their ideas because of their age',
+        'Only listen to the loudest child',
+        'Make every child agree with one another',
+      ],
+      correctAnswer: 'Consider their views seriously',
+      points: 30,
+    },
+  ],
+};
+
+const getQuizQuestions = (quiz) => {
+  const questions = [...quiz.questions];
+  const existingQuestionTexts = new Set(questions.map((question) => question.questionText));
+
+  for (const question of supplementalQuizQuestions[quiz.moduleId] || []) {
+    if (!existingQuestionTexts.has(question.questionText)) {
+      questions.push({ ...question, _id: question.id });
+    }
   }
 
-  if (totalPoints >= 1500) {
-    return {
-      level: 4,
-      title: 'Level 4 Achiever',
-      nextLevelPoints: 2000,
-    };
-  }
-
-  if (totalPoints >= 1000) {
-    return {
-      level: 3,
-      title: 'Level 3 Explorer',
-      nextLevelPoints: 1500,
-    };
-  }
-
-  if (totalPoints >= 500) {
-    return {
-      level: 2,
-      title: 'Level 2 Learner',
-      nextLevelPoints: 1000,
-    };
-  }
-
-  return {
-    level: 1,
-    title: 'Level 1 Beginner',
-    nextLevelPoints: 500,
-  };
+  return questions;
 };
 
 // Resilient user resolver handling MongoDB ObjectId, email lookup, demo user sync, and in-memory fallback
@@ -64,6 +70,8 @@ const resolveUser = async (reqUser) => {
         if (found) return found;
 
         // Automatically persist demo / memory user into MongoDB so they have full ObjectId support
+        const totalPoints = getXPFromCompletedModules(reqUser.completedModules || []);
+        const levelInfo = calculateLevel(totalPoints);
         try {
           found = await User.create({
             name: reqUser.name || 'Aarav',
@@ -72,10 +80,10 @@ const resolveUser = async (reqUser) => {
             age: reqUser.age || 10,
             avatar: reqUser.avatar || 'superhero-aarav',
             role: reqUser.role || 'child',
-            currentLevel: reqUser.currentLevel || 3,
-            levelTitle: reqUser.levelTitle || 'Level 3 Explorer',
-            totalPoints: reqUser.totalPoints ?? 750,
-            nextLevelPoints: reqUser.nextLevelPoints ?? 1200,
+            currentLevel: levelInfo.level,
+            levelTitle: levelInfo.title,
+            totalPoints,
+            nextLevelPoints: levelInfo.nextLevelPoints,
             streakDays: reqUser.streakDays ?? 7,
             badgesEarned: reqUser.badgesEarned || [
               { badgeId: 'first-step', name: 'First Step', icon: '🏆', description: 'Joined EduRights adventure!' },
@@ -272,7 +280,7 @@ export const getQuizByModule = async (req, res) => {
     const safeQuiz = {
       id: quiz._id,
       moduleId: quiz.moduleId,
-      questions: quiz.questions.map((question) => ({
+      questions: getQuizQuestions(quiz).map((question) => ({
         id: question._id,
         questionText: question.questionText,
         options: question.options,
@@ -318,7 +326,7 @@ export const submitQuiz = async (req, res) => {
     let totalPoints = 0;
     let correctAnswers = 0;
 
-    quiz.questions.forEach((question) => {
+    getQuizQuestions(quiz).forEach((question) => {
       totalPoints += question.points;
       const submittedAnswer = answers[question._id.toString()];
       if (submittedAnswer === question.correctAnswer) {
@@ -342,7 +350,7 @@ export const submitQuiz = async (req, res) => {
     const existingIndex = user.completedModules.findIndex(
       (m) => m.moduleId === moduleId
     );
-    const isRetake = existingIndex !== -1;
+    const isRetake = existingIndex !== -1 && user.completedModules[existingIndex].quizCompleted === true;
     let isImproved = false;
     let previousScore = 0;
 
@@ -353,37 +361,27 @@ export const submitQuiz = async (req, res) => {
       m4: 'Right to Privacy',
     };
 
-    if (isRetake) {
-      previousScore = user.completedModules[existingIndex].score || 0;
-      if (score > previousScore) {
-        isImproved = true;
-        user.completedModules[existingIndex].score = score;
-        user.completedModules[existingIndex].completedAt = new Date();
+    if (existingIndex !== -1) {
+      const completedModule = user.completedModules[existingIndex];
+      previousScore = isRetake ? Number(completedModule.score) || 0 : 0;
+      completedModule.quizCompleted = true;
+      if (!isRetake || score > previousScore) {
+        isImproved = isRetake && score > previousScore;
+        completedModule.score = score;
+        completedModule.completedAt = new Date();
       }
     } else {
       user.completedModules.push({
         moduleId,
         title: moduleTitles[moduleId] || `Module ${moduleId}`,
         score,
+        lessonCompleted: false,
+        quizCompleted: true,
         completedAt: new Date(),
       });
     }
 
-    // Always keep total points synchronized with completed module scores
-    const modulePointsSum = user.completedModules.reduce(
-      (acc, m) => acc + (Number(m.score) || 0),
-      0
-    );
-
-    if (user.email === 'aarav@edurights.org') {
-      if (isRetake && isImproved) {
-        user.totalPoints = (user.totalPoints || 0) + (score - previousScore);
-      } else if (!isRetake) {
-        user.totalPoints = (user.totalPoints || 0) + score;
-      }
-    } else {
-      user.totalPoints = modulePointsSum;
-    }
+    user.totalPoints = getXPFromCompletedModules(user.completedModules);
 
     const levelInfo = calculateLevel(user.totalPoints);
     user.currentLevel = levelInfo.level;
@@ -392,7 +390,14 @@ export const submitQuiz = async (req, res) => {
 
     // Badges logic
     const badgesToAward = [];
-    if (user.completedModules.length > 0) {
+    const fullyCompletedModules = user.completedModules.filter(
+      (module) => module.lessonCompleted !== false && module.quizCompleted === true
+    );
+    const currentModuleFullyCompleted = fullyCompletedModules.some(
+      (module) => module.moduleId === moduleId
+    );
+
+    if (fullyCompletedModules.length > 0) {
       badgesToAward.push({
         badgeId: 'first-step',
         name: 'First Step',
@@ -401,7 +406,7 @@ export const submitQuiz = async (req, res) => {
       });
     }
 
-    if (score === totalPoints && totalPoints > 0) {
+    if (currentModuleFullyCompleted && score === totalPoints && totalPoints > 0) {
       badgesToAward.push({
         badgeId: 'quiz-master',
         name: 'Quiz Master',
@@ -424,7 +429,7 @@ export const submitQuiz = async (req, res) => {
         badgeId: 'rising-star',
         name: 'Rising Star',
         icon: '🚀',
-        description: 'Reached Level 2 with 500+ XP',
+        description: 'Reached Level 3 with 500+ XP',
       });
     }
 
@@ -529,28 +534,28 @@ export const getUserProgress = async (req, res) => {
       });
     }
 
-    // Ensure totalPoints matches sum of module scores for registered users
-    if (user.email !== 'aarav@edurights.org' && user.completedModules?.length > 0) {
-      const sum = user.completedModules.reduce((s, m) => s + (Number(m.score) || 0), 0);
-      if (user.totalPoints !== sum) {
-        user.totalPoints = sum;
-        const levelInfo = calculateLevel(user.totalPoints);
-        user.currentLevel = levelInfo.level;
-        user.levelTitle = levelInfo.title;
-        user.nextLevelPoints = levelInfo.nextLevelPoints;
-        if (typeof user.save === 'function') {
-          await user.save();
-        }
-      }
+    const totalPoints = getXPFromCompletedModules(user.completedModules);
+    const levelInfo = calculateLevel(totalPoints);
+    if (
+      user.totalPoints !== totalPoints ||
+      user.currentLevel !== levelInfo.level ||
+      user.levelTitle !== levelInfo.title ||
+      user.nextLevelPoints !== levelInfo.nextLevelPoints
+    ) {
+      user.totalPoints = totalPoints;
+      user.currentLevel = levelInfo.level;
+      user.levelTitle = levelInfo.title;
+      user.nextLevelPoints = levelInfo.nextLevelPoints;
+      if (typeof user.save === 'function') await user.save();
     }
 
     res.status(200).json({
       success: true,
       userProgress: {
-        totalPoints: user.totalPoints ?? 0,
-        currentLevel: user.currentLevel || 1,
-        levelTitle: user.levelTitle || 'Level 1 Beginner',
-        nextLevelPoints: user.nextLevelPoints || 500,
+        totalPoints,
+        currentLevel: levelInfo.level,
+        levelTitle: levelInfo.title,
+        nextLevelPoints: levelInfo.nextLevelPoints,
         streakDays: user.streakDays || 1,
         badgesEarned: user.badgesEarned || [],
         completedModules: user.completedModules || [],

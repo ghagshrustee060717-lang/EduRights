@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema(
     },
     levelTitle: {
       type: String,
-      default: 'Level 1 Beginner',
+      default: 'Rookie Explorer',
     },
     totalPoints: {
       type: Number,
@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
     },
     nextLevelPoints: {
       type: Number,
-      default: 500,
+      default: 200,
     },
     streakDays: {
       type: Number,
@@ -81,6 +81,14 @@ const userSchema = new mongoose.Schema(
         moduleId: String,
         title: String,
         score: Number,
+        lessonCompleted: {
+          type: Boolean,
+          default: true,
+        },
+        quizCompleted: {
+          type: Boolean,
+          default: false,
+        },
         completedAt: {
           type: Date,
           default: Date.now,

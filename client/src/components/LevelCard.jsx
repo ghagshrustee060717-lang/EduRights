@@ -1,16 +1,14 @@
 import React from 'react';
-import { Award, Sparkles } from 'lucide-react';
+import { Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getLevelInfo } from '../utils/progress';
 
 export const LevelCard = () => {
   const { user } = useAuth();
-  const completed = user?.completedModules || [];
-  const moduleScoreTotal = completed.reduce((sum, m) => sum + (Number(m.score) || 0), 0);
-  const currentXP = (user?.role === 'child' && completed.length > 0 && user?.email !== 'aarav@edurights.org')
-    ? moduleScoreTotal
-    : (user?.totalPoints ?? 0);
-  const nextXP = user?.nextLevelPoints || 500;
-  const progressPercent = Math.min(Math.round((currentXP / nextXP) * 100), 100);
+  const currentXP = user?.totalPoints ?? 0;
+  const levelInfo = getLevelInfo(currentXP);
+  const nextXP = levelInfo.nextLevelXP ?? 500;
+  const progressPercent = levelInfo.progressPercent;
 
   return (
     <div style={{
@@ -55,7 +53,7 @@ export const LevelCard = () => {
           justifyContent: 'center',
           border: '2px solid #ffffff',
         }}>
-          {user?.currentLevel || 1}
+          {levelInfo.level}
         </span>
       </div>
 
@@ -72,7 +70,7 @@ export const LevelCard = () => {
             fontWeight: '800',
             color: '#1e1b4b',
           }}>
-            {user?.levelTitle || 'Level 1 Beginner'}
+            {levelInfo.title}
           </h3>
           <span style={{
             fontSize: '0.85rem',

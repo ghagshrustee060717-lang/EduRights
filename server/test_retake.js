@@ -23,7 +23,20 @@ async function testRetake() {
     throw new Error(`Expected initial totalPoints 0, got ${regRes.user.totalPoints}`);
   }
 
-  // 2. Fetch quiz questions for m1
+  // 2. Complete the lesson and earn the first half of its XP
+  const lessonRes = await fetch(`${BASE}/users/award-points`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      completedModule: { moduleId: 'm1', title: 'Right to Education' },
+    }),
+  }).then((r) => r.json());
+
+  if (!lessonRes.success || lessonRes.user.totalPoints !== 67) {
+    throw new Error('Expected first lesson completion to award its share of 200 XP.');
+  }
+
+  // 3. Fetch quiz questions for m1
   const m1Quiz = await fetch(`${BASE}/quizzes/m1`, {
     headers: { Authorization: `Bearer ${token}` },
   }).then((r) => r.json());
@@ -46,11 +59,14 @@ async function testRetake() {
   }).then((r) => r.json());
 
   console.log('2. First submission (partial): Score =', submit1.result.score, 'Total XP =', submit1.userProgress.totalPoints);
-  if (submit1.result.score !== 25 || submit1.userProgress.totalPoints !== 25) {
+  if (submit1.result.score !== 25 || submit1.userProgress.totalPoints !== 167) {
     throw new Error('Mismatch on first attempt!');
   }
+  if (submit1.userProgress.completedModules[0]?.quizCompleted !== true) {
+    throw new Error('Quiz completion was not recorded.');
+  }
 
-  // 3. RETAKE quiz with ALL 4 correct answers (score = 100)
+  // 4. RETAKE quiz with ALL 4 correct answers (score = 100)
   const answersFull = {};
   questions.forEach((q) => {
     if (q.options.includes('6 to 14 years')) answersFull[q.id] = '6 to 14 years';
@@ -73,8 +89,8 @@ async function testRetake() {
   if (submitRetake.result.score !== 100) {
     throw new Error(`Expected updated score 100 on retake, got ${submitRetake.result.score}`);
   }
-  if (submitRetake.userProgress.totalPoints !== 100) {
-    throw new Error(`Expected updated totalPoints 100 on retake, got ${submitRetake.userProgress.totalPoints}`);
+  if (submitRetake.userProgress.totalPoints !== 167) {
+    throw new Error(`Expected XP to remain 167 on retake, got ${submitRetake.userProgress.totalPoints}`);
   }
 
   // 4. Check user progress API
@@ -86,11 +102,28 @@ async function testRetake() {
   const moduleScore = progressRes.userProgress.completedModules.find((m) => m.moduleId === 'm1')?.score;
   console.log('   Module m1 recorded score:', moduleScore);
 
-  if (progressRes.userProgress.totalPoints !== 100 || moduleScore !== 100) {
+  if (progressRes.userProgress.totalPoints !== 167 || moduleScore !== 100) {
     throw new Error('Mismatch in progress API!');
   }
 
-  console.log('\n✅ ALL RETAKE AND SCORE SYNCHRONIZATION TESTS PASSED!\n');
+  const duplicateAward = await fetch(`${BASE}/users/award-points`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      points: 100,
+      completedModule: { moduleId: 'm1', title: 'Right to Education', score: 100 },
+    }),
+  }).then((r) => r.json());
+
+  if (
+    !duplicateAward.success ||
+    duplicateAward.user.totalPoints !== 167 ||
+    duplicateAward.user.completedModules.length !== 1
+  ) {
+    throw new Error('Duplicate module completion awarded XP more than once!');
+  }
+
+  console.log('\n✅ ALL RETAKE, XP, AND DEDUPLICATION TESTS PASSED!\n');
 }
 
 testRetake().catch((err) => {

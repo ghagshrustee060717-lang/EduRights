@@ -5,11 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export const StatsRow = () => {
   const { user } = useAuth();
 
-  const completed = user?.completedModules || [];
-  const moduleScoreTotal = completed.reduce((sum, m) => sum + (Number(m.score) || 0), 0);
-  const xp = (user?.role === 'child' && completed.length > 0 && user?.email !== 'aarav@edurights.org')
-    ? moduleScoreTotal
-    : (user?.totalPoints ?? 0);
+  const xp = user?.totalPoints ?? 0;
   const badgesCount = user?.badgesEarned?.length ?? 0;
   const streak = user?.streakDays ?? 1;
 
